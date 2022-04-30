@@ -1,0 +1,8 @@
+log/*
+out/*
+out/*/*
+out/*/*/*
+out/*/*/*/*
+releases/*
+Deprecated/*
+Deprecated/*/*
