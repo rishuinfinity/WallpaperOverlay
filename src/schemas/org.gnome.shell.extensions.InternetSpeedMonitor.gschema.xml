@@ -23,7 +23,7 @@
     </key>
 
     <!-- <key name="error-msg" type = "s">
-      <default>""</default>
+      <default>"err"</default>
       <summary>Error msg to show on prefs</summary>
     </key> -->
 

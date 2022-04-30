@@ -1,33 +1,27 @@
 #!/bin/python3
-# %%
 import os 
 import sys
 import subprocess as sp
-# import PIL.Image
-from PIL import Image,ImageColor
+from PIL import Image, ImageGrab
 
-
-# %%
-def create_overlay(image,svg,out_path,color):
-    print("Processing",image, end=" ")
+def create_overlay(image,overlay,out_path,color):
     if os.path.splitext(image)[-1] not in [".jpg",".png",".jpeg"]:
-        return
+        return "Image File not in jpg,png or jpeg"
+    if os.path.splitext(overlay)[-1] not in [".png"]:
+        return "Overlay File not in png"
+    # resize image to match screen resolution
     img = Image.open(image)
-    screen_width = 1920
-    screen_height= 1080
+    screen_width, screen_height= ImageGrab.grab().size
     w,h = img.size
     x = min(w//16,h//9)
     nw,nh = 16*x,9*x
     img = img.resize((screen_width,screen_height),resample=0,box=(0.5*(w-nw),0.5*(h-nh),0.5*(w+nw),0.5*(h+nh)))
     
-    out = out_path
-    cmd = "inkscape -w "+ str(screen_width) + " -h " + str(screen_height) +" "+ svg+" -o "+out
-    # print(cmd)
-    sp.Popen(cmd, shell=True).wait()
-    overlay = Image.open(out)
+    overlay = Image.open(overlay)
     solid_color = Image.new('RGB', img.size, color=color)
-    img.paste(solid_color,(0,0),overlay);
-    img.save(out)
+    img.paste(solid_color,(0,0),overlay) # adding solid color image on top with overlay as mask
+    img.save(out_path)
+    return "true"
 
 
 
@@ -37,18 +31,15 @@ if n != 5:
     for i in range(len(sys.argv)):
         print(i,sys.argv[i])
 else:
-    image_path = sys.argv[1]
-    svg_path   = sys.argv[2]
-    out_path   = sys.argv[3]
-    color      = sys.argv[4]
+    image_path   = sys.argv[1]
+    overlay_path = sys.argv[2]
+    out_path     = sys.argv[3]
+    color        = sys.argv[4]
     if os.path.isfile(image_path):
-        create_overlay(image_path,svg_path,out_path,color);
+        print(create_overlay(image_path,overlay_path,out_path,color))
     else:
         print("File not an Image")
-    
 
-
-# %%
 
 
 

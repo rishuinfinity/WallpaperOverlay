@@ -66,31 +66,24 @@ function saveExceptionLog(e){
 let modWallpaper = Me.path + "/modWallpaper.png"
 
 function createWallpaper(){
-  try{
-    const file = Gio.File.new_for_uri('file://' + modWallpaper);
-    file.delete(null);
-  }
-  catch{}
   let image_path = Settings.get_string('picture-uri');
   let svg_path = Settings.get_string('svg-uri');
   let svg_color = Settings.get_string('svg-color');
   let command = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ svg_path + "' '"+ modWallpaper + "' '" + svg_color + "'";
-  // saveExceptionLog(command);
   var [ok, out, err, exit] = GLib.spawn_command_line_sync(command);
-  // saveExceptionLog(out);
-  return ok;
+  return out;
 }
 
 function applyWallpaper(){
   let response = createWallpaper();
-  saveExceptionLog(response);
-  if(response){
+  if(response == "true\n"){
     setWallpaper(Settings.get_string("picture-uri"));
     setWallpaper(modWallpaper);
   } else {
     saveExceptionLog("CreateWallpaper Failed");
-    return response;
+    saveExceptionLog("r "+ response);
   }
+  return response;
 }
 
 
