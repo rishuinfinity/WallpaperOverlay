@@ -4,6 +4,7 @@ out/*/*
 out/*/*/*
 out/*/*/*/*
 releases/*
-Deprecated/*
-Deprecated/*/*
-Deprecated/*/*/*
+deprecated/*
+deprecated/*/*
+deprecated/*/*/*
+deprecated/*/*/*/*
