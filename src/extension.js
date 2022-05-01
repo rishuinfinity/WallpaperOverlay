@@ -16,9 +16,14 @@ const home_dir = GLib.get_home_dir();
 
 let logSize = 8000; // about 8k
 
+let overlay_map;
 
 /////////////////////////////////////////
 // Important functions
+function get_overlay_path_from_enum(v){
+  return overlay_map[v];
+}
+
 function modifySetting(schema_path, setting_id, setting_value){
   // This function assumes that value is always string
   let setting = new Gio.Settings({schema: schema_path});
@@ -65,17 +70,16 @@ function saveExceptionLog(e){
 
 let modWallpaper = Me.path + "/modWallpaper.png"
 
-function createWallpaper(){
+function createWallpaper(overlay_path){
   let image_path = Settings.get_string('picture-uri');
-  let svg_path = Settings.get_string('svg-uri');
-  let svg_color = Settings.get_string('svg-color');
-  let command = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ svg_path + "' '"+ modWallpaper + "' '" + svg_color + "'";
+  let overlay_color = Settings.get_string('overlay-color');
+  let command = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ overlay_path + "' '"+ modWallpaper + "' '" + overlay_color + "'";
   var [ok, out, err, exit] = GLib.spawn_command_line_sync(command);
   return out;
 }
 
-function applyWallpaper(){
-  let response = createWallpaper();
+function applyWallpaper(overlay_path){
+  let response = createWallpaper(overlay_path);
   if(response == "true\n"){
     setWallpaper(Settings.get_string("picture-uri"));
     setWallpaper(modWallpaper);
@@ -94,6 +98,10 @@ function init() {
 }
 
 function enable() {
+  overlay_map = {
+    "0" : "/resources/bottom_gradient_waves.png",
+    "1" : "/resources/top_solid_convex.png"
+  };
 }
 
 function disable() {

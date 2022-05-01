@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-
+  <enum id="org.gnome.shell.extensions.WallpaperOverlay.overlay-style">
+      <value value="0" nick="Bottom Gradient Waves"/>
+      <value value="1" nick="Top Solid Convex"/>
+    </enum>
   <schema id="org.gnome.shell.extensions.WallpaperOverlay"
     path="/org/gnome/shell/extensions/WallpaperOverlay/">
 
@@ -10,16 +13,28 @@
       <description>Specify the folder in which your wallpapers are stored</description>
     </key>
 
-    <key name="svg-uri" type = "s">
+    <key name="overlay-uri" type = "s">
       <default>"/usr/share/backgrounds"</default>
       <summary>Path to your wallpaper folder</summary>
       <description>Specify the folder in which your wallpapers are stored</description>
     </key>
 
-    <key name="svg-color" type = "s">
+    <key name="overlay-color" type = "s">
       <default>"#ffffff"</default>
       <summary>Path to your wallpaper folder</summary>
       <description>Specify the folder in which your wallpapers are stored</description>
+    </key>
+
+    <key name="overlay-style" enum = "org.gnome.shell.extensions.WallpaperOverlay.overlay-style">
+      <default>"Bottom Gradient Waves"</default>
+      <summary>Change wallpaper Overlay Style</summary>
+      <description>Choose which effect to put overlay on wallpaper</description>
+    </key>
+
+    <key name="is-custom-overlay" type="b">
+      <default>false</default>
+      <summary>Change wallpaper Overlay Style</summary>
+      <description>Choose which effect to put overlay on wallpaper</description>
     </key>
 
     <!-- <key name="error-msg" type = "s">

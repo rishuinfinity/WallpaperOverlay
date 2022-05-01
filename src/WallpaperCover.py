@@ -18,6 +18,7 @@ def create_overlay(image,overlay,out_path,color):
     img = img.resize((screen_width,screen_height),resample=0,box=(0.5*(w-nw),0.5*(h-nh),0.5*(w+nw),0.5*(h+nh)))
     
     overlay = Image.open(overlay)
+    overlay = overlay.resize((screen_width,screen_height),resample=0)
     solid_color = Image.new('RGB', img.size, color=color)
     img.paste(solid_color,(0,0),overlay) # adding solid color image on top with overlay as mask
     img.save(out_path)
