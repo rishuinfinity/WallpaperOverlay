@@ -1,47 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
-  <enum id="org.gnome.shell.extensions.WallpaperOverlay.overlay-style">
-      <value value="0" nick="Bottom Gradient Waves"/>
-      <value value="1" nick="Top Solid Convex"/>
-    </enum>
   <schema id="org.gnome.shell.extensions.WallpaperOverlay"
     path="/org/gnome/shell/extensions/WallpaperOverlay/">
 
     <key name="picture-uri" type = "s">
-      <default>"/usr/share/backgrounds"</default>
-      <summary>Path to your wallpaper folder</summary>
-      <description>Specify the folder in which your wallpapers are stored</description>
+      <default>"Click to select image"</default>
+      <summary>Path to your wallpaper image</summary>
+      <description>Select the wallpaper image on which you want to apply overlay</description>
     </key>
 
     <key name="overlay-uri" type = "s">
-      <default>"/usr/share/backgrounds"</default>
+      <default>"Click to select overlay"</default>
       <summary>Path to your wallpaper folder</summary>
-      <description>Specify the folder in which your wallpapers are stored</description>
+      <description>Select the overlay file (in png format) which you want to apply on the wallpaper</description>
     </key>
 
     <key name="overlay-color" type = "s">
-      <default>"#ffffff"</default>
-      <summary>Path to your wallpaper folder</summary>
-      <description>Specify the folder in which your wallpapers are stored</description>
+      <default>"#000000"</default>
+      <summary>Choose Overlay Color</summary>
+      <description>The overlay will only be single coloured, so choose that colour here</description>
     </key>
 
-    <key name="overlay-style" enum = "org.gnome.shell.extensions.WallpaperOverlay.overlay-style">
-      <default>"Bottom Gradient Waves"</default>
-      <summary>Change wallpaper Overlay Style</summary>
-      <description>Choose which effect to put overlay on wallpaper</description>
+    <key name="overlay-style" type="i">
+      <default>0</default>
+      <summary>The index from the default Overlay styles available</summary>
+      <description>Choose in prefs dialog</description>
     </key>
 
     <key name="is-custom-overlay" type="b">
       <default>false</default>
-      <summary>Change wallpaper Overlay Style</summary>
-      <description>Choose which effect to put overlay on wallpaper</description>
+      <summary>Specify whether to use a custom overlay file</summary>
+      <description>Make sure to select a png file</description>
     </key>
-
-    <!-- <key name="error-msg" type = "s">
-      <default>"err"</default>
-      <summary>Error msg to show on prefs</summary>
-    </key> -->
-
-
   </schema>
 </schemalist>

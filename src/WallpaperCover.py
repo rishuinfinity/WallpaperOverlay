@@ -4,6 +4,8 @@ import sys
 import subprocess as sp
 from PIL import Image, ImageGrab
 
+# Holy Grail color #ffff01ff
+
 def create_overlay(image,overlay,out_path,color):
     if os.path.splitext(image)[-1] not in [".jpg",".png",".jpeg"]:
         return "Image File not in jpg,png or jpeg"

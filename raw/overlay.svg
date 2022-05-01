@@ -8,9 +8,10 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
-   sodipodi:docname="top_solid_convex.svg"
+   sodipodi:docname="bottom_gradient_straight.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -37,14 +38,40 @@
      inkscape:current-layer="layer1"
      showguides="true" />
   <defs
-     id="defs2" />
+     id="defs2">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient960">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop956" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop958" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient960"
+       id="linearGradient964"
+       x1="243.77669"
+       y1="285.75"
+       x2="243.77669"
+       y2="185.47295"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,1.2192208,0,-62.642349)" />
+  </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <path
-       id="path6530"
-       style="opacity:1;fill:#000000;stroke-width:0.739732;stroke-linecap:round;paint-order:markers fill stroke"
-       d="M 254.87075,28.43208 A 274.45324,30.245116 0 0 1 0,9.37796 V 0 H 507.99999 V 9.86639 A 274.45324,30.245116 0 0 1 254.87075,28.43208 Z" />
+    <rect
+       style="fill:url(#linearGradient964);fill-opacity:1;stroke-width:1.10419;stroke-linecap:round;paint-order:markers fill stroke"
+       id="rect924"
+       width="508"
+       height="122.84004"
+       x="0"
+       y="162.90993" />
   </g>
 </svg>

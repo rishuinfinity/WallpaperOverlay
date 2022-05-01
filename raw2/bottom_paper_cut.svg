@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1920"
+   height="1080"
+   viewBox="0 0 507.99999 285.75001"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="bottom_paper_cut.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#999999"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     width="1920px"
+     inkscape:snap-page="true"
+     inkscape:zoom="0.37727624"
+     inkscape:cx="1433.9626"
+     inkscape:cy="854.81133"
+     inkscape:window-width="1920"
+     inkscape:window-height="1026"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     showguides="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1010" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <filter
+       inkscape:collect="always"
+       style="color-interpolation-filters:sRGB"
+       id="filter2902"
+       x="-0.08719736"
+       y="-1.4281437"
+       width="1.1743947"
+       height="3.8562874">
+      <feGaussianBlur
+         inkscape:collect="always"
+         stdDeviation="13.289582"
+         id="feGaussianBlur2904" />
+    </filter>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2906">
+      <rect
+         style="fill:#e6e6e6;stroke:none;stroke-width:0.749062;stroke-linecap:round;paint-order:markers fill stroke"
+         id="rect2908"
+         width="508"
+         height="21.166666"
+         x="-1.2031856e-13"
+         y="264.58331" />
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="rect1873"
+       style="stroke-width:0.635617;stroke-linecap:round;paint-order:markers fill stroke;filter:url(#filter2902);opacity:0.8986133"
+       d="m 63.747948,264.19059 c 0,0 112.747922,-17.41826 169.587452,-17.8406 65.66098,-0.48789 196.19194,17.69599 196.19194,17.69599 v 0 l -195.03509,4.62755 z"
+       sodipodi:nodetypes="cscccc"
+       clip-path="url(#clipPath2906)" />
+  </g>
+</svg>
