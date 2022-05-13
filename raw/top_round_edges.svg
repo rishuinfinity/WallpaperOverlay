@@ -26,11 +26,11 @@
      units="px"
      width="1920px"
      inkscape:snap-page="true"
-     inkscape:zoom="0.53354917"
-     inkscape:cx="1249.182"
-     inkscape:cy="445.13236"
+     inkscape:zoom="0.13338729"
+     inkscape:cx="-232.40595"
+     inkscape:cy="907.13289"
      inkscape:window-width="1920"
-     inkscape:window-height="1026"
+     inkscape:window-height="1019"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -48,7 +48,7 @@
      id="layer1">
     <path
        id="rect1485"
-       style="fill:#000000;stroke:none;stroke-width:1;stroke-linecap:round;paint-order:markers fill stroke"
-       d="M 0,36.13423 V 0 h 507.99999 v 36.13423 c 0,-7.70432 -6.20233,-13.90665 -13.90663,-13.90665 H 13.906645 C 6.2023206,22.22758 0,28.42991 0,36.13423 Z" />
+       style="fill:#0000ff;stroke:none;stroke-width:0.826471;stroke-linecap:round;paint-order:markers fill stroke;fill-opacity:1"
+       d="M 0,24.68164 V 0 h 507.99999 v 24.68164 c 0,-5.262469 -6.20233,-9.498997 -13.90663,-9.498997 H 13.906645 C 6.2023206,15.182643 0,19.419171 0,24.68164 Z" />
   </g>
 </svg>

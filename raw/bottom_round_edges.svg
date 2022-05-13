@@ -27,10 +27,10 @@
      width="1920px"
      inkscape:snap-page="true"
      inkscape:zoom="0.53354917"
-     inkscape:cx="1249.182"
-     inkscape:cy="445.13236"
+     inkscape:cx="950.24044"
+     inkscape:cy="446.06948"
      inkscape:window-width="1920"
-     inkscape:window-height="1026"
+     inkscape:window-height="1019"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -48,8 +48,7 @@
      id="layer1">
     <path
        id="rect1485"
-       style="fill:#000000;stroke-width:3.77953;stroke-linecap:round;paint-order:markers fill stroke;stroke:none"
-       d="M 0 943.42969 L 0 1080 L 1920 1080 L 1920 943.42969 C 1920 972.54838 1896.5581 995.99023 1867.4395 995.99023 L 52.560547 995.99023 C 23.441842 995.99023 0 972.54838 0 943.42969 z "
-       transform="scale(0.26458333)" />
+       style="fill:#0000ff;stroke:none;stroke-width:0.941704;stroke-linecap:round;paint-order:markers fill stroke"
+       d="M 0,253.70598 V 285.75 h 507.99999 v -32.04402 c 0,6.83223 -6.20233,12.33248 -13.90663,12.33248 H 13.906645 C 6.2023206,266.03846 0,260.53821 0,253.70598 Z" />
   </g>
 </svg>

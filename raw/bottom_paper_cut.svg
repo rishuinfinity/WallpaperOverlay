@@ -11,6 +11,7 @@
    sodipodi:docname="bottom_paper_cut.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -26,9 +27,9 @@
      units="px"
      width="1920px"
      inkscape:snap-page="true"
-     inkscape:zoom="0.37727624"
-     inkscape:cx="1433.9626"
-     inkscape:cy="854.81133"
+     inkscape:zoom="0.53354918"
+     inkscape:cx="1081.4373"
+     inkscape:cy="542.59291"
      inkscape:window-width="1920"
      inkscape:window-height="1026"
      inkscape:window-x="0"
@@ -42,40 +43,72 @@
   </sodipodi:namedview>
   <defs
      id="defs2">
-    <filter
+    <linearGradient
        inkscape:collect="always"
-       style="color-interpolation-filters:sRGB"
-       id="filter2902"
-       x="-0.08719736"
-       y="-1.4281437"
-       width="1.1743947"
-       height="3.8562874">
-      <feGaussianBlur
-         inkscape:collect="always"
-         stdDeviation="13.289582"
-         id="feGaussianBlur2904" />
-    </filter>
+       id="linearGradient946">
+      <stop
+         style="stop-color:#000000;stop-opacity:1"
+         offset="0"
+         id="stop942" />
+      <stop
+         style="stop-color:#0000ff;stop-opacity:0;"
+         offset="1"
+         id="stop944" />
+    </linearGradient>
     <clipPath
        clipPathUnits="userSpaceOnUse"
-       id="clipPath2906">
+       id="clipPath6148">
       <rect
-         style="fill:#e6e6e6;stroke:none;stroke-width:0.749062;stroke-linecap:round;paint-order:markers fill stroke"
-         id="rect2908"
+         style="fill:#e6e6e6;stroke:none;stroke-width:2.11069;stroke-linecap:round;paint-order:markers fill stroke"
+         id="rect6150"
          width="508"
-         height="21.166666"
-         x="-1.2031856e-13"
-         y="264.58331" />
+         height="168.06055"
+         x="-11.989936"
+         y="264.11856" />
     </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath848">
+      <rect
+         style="opacity:1;fill:#0000ff;stroke:none;stroke-width:0.512659;stroke-linecap:round;paint-order:markers fill stroke"
+         id="rect850"
+         width="394.40799"
+         height="12.770037"
+         x="41.499336"
+         y="264.01053"
+         clip-path="none" />
+    </clipPath>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient946"
+       id="radialGradient1288"
+       cx="254.81805"
+       cy="39.570076"
+       fx="254.81805"
+       fy="39.570076"
+       r="254"
+       gradientTransform="matrix(1.4219037,0,0,0.10285886,-107.50868,261.28005)"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <path
-       id="rect1873"
-       style="stroke-width:0.635617;stroke-linecap:round;paint-order:markers fill stroke;filter:url(#filter2902);opacity:0.8986133"
-       d="m 63.747948,264.19059 c 0,0 112.747922,-17.41826 169.587452,-17.8406 65.66098,-0.48789 196.19194,17.69599 196.19194,17.69599 v 0 l -195.03509,4.62755 z"
-       sodipodi:nodetypes="cscccc"
-       clip-path="url(#clipPath2906)" />
+    <rect
+       style="opacity:1;fill:#0000ff;stroke:none;stroke-width:0.749062;stroke-linecap:round;paint-order:markers fill stroke"
+       id="rect846"
+       width="508"
+       height="21.166666"
+       x="-3.2368163e-07"
+       y="264.58337"
+       clip-path="none" />
+    <rect
+       style="opacity:0.81319529;fill:url(#radialGradient1288);stroke:none;stroke-width:0.749062;stroke-linecap:round;paint-order:markers fill stroke;fill-opacity:1"
+       id="rect910"
+       width="508"
+       height="21.166666"
+       x="-3.2368163e-07"
+       y="264.58337"
+       clip-path="none" />
   </g>
 </svg>

@@ -28,9 +28,9 @@
      inkscape:snap-page="true"
      inkscape:zoom="0.53354917"
      inkscape:cx="952.11469"
-     inkscape:cy="514.47929"
+     inkscape:cy="515.41641"
      inkscape:window-width="1920"
-     inkscape:window-height="1026"
+     inkscape:window-height="1019"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -44,7 +44,7 @@
      id="layer1">
     <path
        id="path6530"
-       style="opacity:1;fill:#000000;stroke-width:0.739732;stroke-linecap:round;paint-order:markers fill stroke"
+       style="opacity:1;fill:#0000ff;stroke-width:0.739732;stroke-linecap:round;paint-order:markers fill stroke;fill-opacity:1"
        d="M 254.87075,28.43208 A 274.45324,30.245116 0 0 1 0,9.37796 V 0 H 507.99999 V 9.86639 A 274.45324,30.245116 0 0 1 254.87075,28.43208 Z" />
   </g>
 </svg>
