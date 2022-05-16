@@ -1,16 +1,30 @@
 #!/bin/python3
 import os 
 import sys
-import subprocess as sp
-from PIL import Image, ImageGrab
+libcheck = 1
+try:
+    from PIL import Image, ImageGrab
+except:
+    libcheck *= 2
+try:
+    from cairosvg import svg2png
+except:
+    libcheck *= 3
+if libcheck != 1:
+    print("Please install required python packages")
+    print("Run the following in terminal:")
+    if libcheck %2 == 0: print("\tpip install pillow")
+    if libcheck %3 == 0: print("\tpip install cairosvg")
+    quit()
 
-# Holy Grail color #ffff01ff
+# Holy Grail color #0000ff, this color would always get replaced
 
-def create_overlay(image,overlay,out_path,color):
+def create_overlay(image,overlay,out_path):
     if os.path.splitext(image)[-1] not in [".jpg",".png",".jpeg"]:
         return "Image File not in jpg,png or jpeg"
-    if os.path.splitext(overlay)[-1] not in [".png"]:
-        return "Overlay File not in png"
+    if os.path.splitext(overlay)[-1] not in [".svg"]:
+        return "Overlay File not in svg"
+
     # resize image to match screen resolution
     img = Image.open(image)
     screen_width, screen_height= ImageGrab.grab().size
@@ -18,30 +32,28 @@ def create_overlay(image,overlay,out_path,color):
     x = min(w//16,h//9)
     nw,nh = 16*x,9*x
     img = img.resize((screen_width,screen_height),resample=0,box=(0.5*(w-nw),0.5*(h-nh),0.5*(w+nw),0.5*(h+nh)))
-    
-    overlay = Image.open(overlay)
+    # load overlay
+    svg2png(url=overlay, write_to=overlay+".png")
+    overlay = Image.open(overlay+".png")
     overlay = overlay.resize((screen_width,screen_height),resample=0)
-    solid_color = Image.new('RGB', img.size, color=color)
-    img.paste(solid_color,(0,0),overlay) # adding solid color image on top with overlay as mask
+    img.paste(overlay,(0,0), overlay) # adding solid color image on top with overlay as mask
     img.save(out_path)
-    return "true"
 
 
 
 n = len(sys.argv)
-if n != 5:
-    print("Current argument length",n,"Needed 4")
+if n != 4:
+    print("Current argument length",n,"Needed 3")
     for i in range(len(sys.argv)):
         print(i,sys.argv[i])
 else:
-    image_path   = sys.argv[1]
-    overlay_path = sys.argv[2]
-    out_path     = sys.argv[3]
-    color        = sys.argv[4]
-    if os.path.isfile(image_path):
-        print(create_overlay(image_path,overlay_path,out_path,color))
-    else:
-        print("File not an Image")
+    try:
+        image_path   = sys.argv[1]
+        overlay_path = sys.argv[2]
+        out_path     = sys.argv[3]
+        print(create_overlay(image_path,overlay_path,out_path))
+    except:
+        print("some error occured")
 
 
 

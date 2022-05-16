@@ -5,8 +5,10 @@
 */
 "use strict";
 //Const Variables
+imports.gi.versions.Gtk = "3.0";
 const Gio            = imports.gi.Gio;
 const GLib           = imports.gi.GLib;
+const Gdk            = imports.gi.Gdk;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me             = imports.misc.extensionUtils.getCurrentExtension();
 const [major]        = imports.misc.config.PACKAGE_VERSION.split('.');
@@ -15,7 +17,8 @@ const home_dir       = GLib.get_home_dir();
 
 //Temporary Variables
 let Settings     = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
-let modWallpaper = Me.path + "/modWallpaper.png";
+let modWallpaper = Me.path + "/temp/modWallpaper.png";
+let modOverlay   = Me.path + "/temp/modOverlay.svg";
 let logSize      = 8000; // about 8k
 
 /////////////////////////////////////////
@@ -24,26 +27,39 @@ let logSize      = 8000; // about 8k
 function modifySetting(schema_path, setting_id, setting_value){
   // This function assumes that setting-value is always string
   let setting = new Gio.Settings({schema: schema_path});
-  if  (setting.is_writable(setting_id)){
+  if (setting.is_writable(setting_id)){
     let response = setting.set_string(setting_id, setting_value);
-    if  (response){
+    if (response){
       Gio.Settings.sync();
+      return [setting_id + " set \n",1];
     }
-    else{
-      saveExceptionLog("Failed to Modify "+setting_id);
-    }
+    saveExceptionLog(schema_path+"."+setting_id +" unmodifiable");
+    return [setting_id +" unmodifiable \n",0];
   }
-  else{
-    saveExceptionLog(setting_id + " is not writable");
-  }
+  saveExceptionLog(schema_path+"."+setting_id +" unwritable");
+  return [setting_id +" unwritable \n",0];
 }
 
 function setWallpaper(path){
   path = "file://" + path;
-  modifySetting("org.gnome.desktop.background", "picture-uri", path);
-  if (shellVersion >= 42)
-  modifySetting("org.gnome.desktop.background", "picture-uri-dark", path);
+  var [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri", path);
+  if (response == 0) return [msg,0];
+  if (shellVersion >= 42){
+    var [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri-dark", path);
+    if (response == 0) return [msg,0];
+  }
+  return ["Wallpaper Set",1];
 }
+
+// Couldn't do it in gjs, so had to import another library in python to do it
+// function SvgtoPng(overlay_path){
+//   const image = new Gtk.Image()
+//   saveExceptionLog("Gtk Image Failed");
+//   image.set_from_file(Me.path + "/overlay.svg");
+//   saveExceptionLog("getpixbuf Failed");
+//   let pb = image.get_pixbuf();
+//   saveExceptionLog(pb.savev(Me.path + "/overlay.png","png",[],[]));
+// }
 
 function saveExceptionLog(e){
   let log_file = Gio.file_new_for_path( 
@@ -64,27 +80,46 @@ function saveExceptionLog(e){
 /////////////////////////////////////////
 // Main Code
 
-function createWallpaper(overlay_path){
+function createOverlay(overlay_path){
+  let overlay_color = Settings.get_string('overlay-color');
+  let ext_check = overlay_path.split(".");
+  if(ext_check[ext_check.length-1] != "svg") return ["Overlay is not an svg file",0];
+  let svg_file      = String(GLib.file_get_contents(overlay_path)[1]);
+  svg_file          = svg_file.replaceAll("#0000ff",overlay_color);
+  let new_file      = Gio.file_new_for_path( modOverlay );
+  try{new_file.create(Gio.FileCreateFlags.NONE, null);} catch{} // if not present, create a new file
+  new_file.replace_contents(svg_file, null, false,
+  Gio.FileCreateFlags.REPLACE_DESTINATION, null);
+  return ["Overlay Created \n",1];
+}
+
+function createWallpaper(){
   let image_path        = Settings.get_string('picture-uri');
-  let overlay_color     = Settings.get_string('overlay-color');
-  let command           = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ overlay_path + "' '"+ modWallpaper + "' '" + overlay_color + "'";
+  let command           = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ modOverlay + "' '"+ modWallpaper + "'";
+  saveExceptionLog("Terminal: " + command);
   var [ok,out,err,exit] = GLib.spawn_command_line_sync(command);
-  if (ok)
-  return out;
-  return "Command Executed: "+ ok + " " +out;
+  if (out == "None\n")
+  return ["Overlay Applied on Wallpaper",1];
+  return [out + err + "\n",0];
 }
 
 function applyWallpaper(overlay_path){
-  let response  = createWallpaper(overlay_path);
-  if  (response == "true\n"){
-    setWallpaper(Settings.get_string("picture-uri"));
-    setWallpaper(modWallpaper);
-  } else {
-    saveExceptionLog("CreateWallpaper Failed");
+  try{
+  var [msg,response] = createOverlay(overlay_path);
+  if (response == 0) return msg;
+  var [msg,response] = createWallpaper();
+  if (response == 0) return msg;
+  var [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
+  if (response == 0) return msg;
+  var [msg,response] = setWallpaper(modWallpaper);
+  if (response == 0) return msg;
+  return "Applied"
+  } catch (e)
+  {
+    saveExceptionLog(e);
+    return "Error : "+ e;
   }
-  return response;
 }
-
 
 /////////////////////////////////////////
 // Extension functions
