@@ -122,6 +122,20 @@ function buildPrefsWidget() {
         );
         
     })
+    let getCurrentWallpaper = new Gtk.Button({
+        valign     : Gtk.Align.CENTER,
+        halign     : Gtk.Align.FILL,
+        tooltip_text: "Get Current Wallpaper",
+        icon_name  : "object-rotate-left-symbolic"
+    });
+    getCurrentWallpaper.connect('clicked',()=>{
+        let setting = new Gio.Settings({schema: "org.gnome.desktop.background"});
+        let wlpapr  = setting.get_string("picture-uri").substr(7,);
+        this.settings.set_string("picture-uri",wlpapr);
+        imageButton.label = shrink_string(wlpapr);
+        Image.set_from_file(this.settings.get_string("picture-uri")); 
+    });
+
     // Overlay Menu
     let OverlayOptions = {};
     try{
@@ -149,22 +163,6 @@ function buildPrefsWidget() {
         use_markup : true,
         sensitive  : !this.settings.get_boolean('is-custom-overlay'),
     });
-
-    // let overlayMenuToggle = new Gtk.ComboBoxText({
-    //     halign     : Gtk.Align.END,
-    //     sensitive  : !this.settings.get_boolean('is-custom-overlay'),
-    // });
-    // Object.entries(OverlayOptions).forEach(([key, value]) => {
-    //     overlayMenuToggle.append_text(key);
-    //  });
-        
-
-    // overlayMenuToggle.set_active(this.settings.get_int("overlay-style") || 0);
-    // overlayMenuToggle.connect('changed', combobox => {
-    //     this.settings.set_int("overlay-style", combobox.get_active());
-    //     overlayMenuToggle.set_active(this.settings.get_int("overlay-style") || 0);
-    //     // Overlay.set_from_file(this.settings.get_string("overlay-style"));
-    // });
 
     let overlayDropDownList = new Gtk.StringList({})
     Object.entries(OverlayOptions).forEach(([key, value]) => {
@@ -220,14 +218,9 @@ function buildPrefsWidget() {
     function customOverlayToggleOrganiseMenu(settings){
         // I dont know why but the boolean values are somehow sent reversed here, hence the opposite assignment
         overlayMenuLabel.sensitive  = settings.get_boolean('is-custom-overlay');
-        overlayMenuToggle.sensitive = settings.get_boolean('is-custom-overlay');
+        overlayMenuDropDown.sensitive = settings.get_boolean('is-custom-overlay');
         overlayPathLabel.sensitive  = !settings.get_boolean('is-custom-overlay');
         overlayPathButton.sensitive = !settings.get_boolean('is-custom-overlay');
-        // if (settings.get_boolean('is-custom-overlay')){
-        //     Overlay.set_from_file(this.settings.get_string("overlay-uri"));
-        // } else{
-        //     Overlay.set_from_file(this.settings.get_string("overlay-style"));
-        // }
     }
     this.settings.bind(
         'is-custom-overlay',
@@ -307,19 +300,16 @@ function buildPrefsWidget() {
     });
 
     // attach elements to positions
-    prefsWidget.attach(Image,              0, 1, 2, 1); //prefsWidget.attach(Overlay,            1, 1, 1, 1);
-    prefsWidget.attach(imagepathLabel,     0, 2, 1, 1); prefsWidget.attach(imageButton,        1, 2, 1, 1);
-    prefsWidget.attach(overlayMenuLabel,   0, 3, 1, 1); prefsWidget.attach(overlayMenuDropDown,  1, 3, 1, 1);
-    prefsWidget.attach(customOverlayLabel, 0, 4, 1, 1); prefsWidget.attach(customOverlayToggle,1, 4, 1, 1);
-    prefsWidget.attach(overlayPathLabel,   0, 5, 1, 1); prefsWidget.attach(overlayPathButton,      1, 5, 1, 1);
-    prefsWidget.attach(changeColorLabel,   0, 6, 1, 1); prefsWidget.attach(colorinp,           1, 6, 1, 1);
-                            prefsWidget.attach(applyButton,        0, 7, 2, 1);
-                            prefsWidget.attach(ErrorLabel,         0, 8, 2, 1);
+    prefsWidget.attach(Image,              0, 1, 3, 1); //prefsWidget.attach(Overlay,            1, 1, 1, 1);
+    prefsWidget.attach(imagepathLabel,     0, 2, 1, 1); prefsWidget.attach(getCurrentWallpaper, 1, 2, 1, 1);    prefsWidget.attach(imageButton,         2, 2, 1, 1);
+    prefsWidget.attach(overlayMenuLabel,   0, 3, 1, 1);                                                         prefsWidget.attach(overlayMenuDropDown, 2, 3, 1, 1);
+    prefsWidget.attach(customOverlayLabel, 0, 4, 1, 1);                                                         prefsWidget.attach(customOverlayToggle, 2, 4, 1, 1);
+    prefsWidget.attach(overlayPathLabel,   0, 5, 1, 1);                                                         prefsWidget.attach(overlayPathButton,   2, 5, 1, 1);
+    prefsWidget.attach(changeColorLabel,   0, 6, 1, 1);                                                         prefsWidget.attach(colorinp,            2, 6, 1, 1);
+                                                        prefsWidget.attach(applyButton,        0, 7, 3, 1);
+                                                        prefsWidget.attach(ErrorLabel,         0, 8, 3, 1);
 
     // Return our widget which will be added to the window
-    // let window = prefsWidget.get_root();
-    // window.default_width = 500;
-    // window.default_height = 900;
     return prefsWidget;
 }
 

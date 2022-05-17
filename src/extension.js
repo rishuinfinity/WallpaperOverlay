@@ -18,6 +18,7 @@ const home_dir       = GLib.get_home_dir();
 //Temporary Variables
 let Settings     = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
 let modWallpaper = Me.path + "/temp/modWallpaper.png";
+let modWallpaper2= Me.path + "/temp/modWallpaper2.png";
 let modOverlay   = Me.path + "/temp/modOverlay.svg";
 let logSize      = 8000; // about 8k
 
@@ -95,6 +96,12 @@ function createOverlay(overlay_path){
 
 function createWallpaper(){
   let image_path        = Settings.get_string('picture-uri');
+  if (image_path == modWallpaper){
+    // exchange modWallpaper paths
+    let temp      = modWallpaper;
+    modWallpaper  = modWallpaper2;
+    modWallpaper2 = temp;
+  }
   let command           = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ modOverlay + "' '"+ modWallpaper + "'";
   saveExceptionLog("Terminal: " + command);
   var [ok,out,err,exit] = GLib.spawn_command_line_sync(command);
