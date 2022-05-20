@@ -77,20 +77,20 @@ is_warning() {
 # install extension
 install() {
   print "Installing to ${INSTALL_DIR}"
-  rm -rf "${INSTALL_DIR}/WallpaperSwitcher@Rishu"
-  cp -rf "${SRC_DIR}/src" "${INSTALL_DIR}/WallpaperSwitcher@Rishu" &>> "$LOG_FILE"
-  glib-compile-schemas --strict --targetdir="${INSTALL_DIR}/WallpaperSwitcher@Rishu/schemas" "${INSTALL_DIR}/WallpaperSwitcher@Rishu/schemas"
+  rm -rf "${INSTALL_DIR}/WallpaperOverlay@Rishu"
+  cp -rf "${SRC_DIR}/src" "${INSTALL_DIR}/WallpaperOverlay@Rishu" &>> "$LOG_FILE"
+  glib-compile-schemas --strict --targetdir="${INSTALL_DIR}/WallpaperOverlay@Rishu/schemas" "${INSTALL_DIR}/WallpaperOverlay@Rishu/schemas"
   mkdir -p "$HOME/.local/var/log/"
-  touch "$HOME/.local/var/log/WallpaperSwitcher.log"
+  touch "$HOME/.local/var/log/WallpaperOverlay.log"
   is_failed "Done" "Skipping: Can not install to ${INSTALL_DIR}. See log for more info."
 }
 
 # build for release
 build() {
-  print "Creating WallpaperSwitcher@Rishu.zip"
+  print "Creating WallpaperOverlay@Rishu.zip"
   mkdir -p "${SRC_DIR}/out"
   cd "src"
-  zip -6rX "$SRC_DIR/out/WallpaperSwitcher@Rishu.zip" * &>> "$LOG_FILE"
+  zip -6rX "$SRC_DIR/out/WallpaperOverlay@Rishu.zip" * &>> "$LOG_FILE"
   cd ..
   is_failed "Done" "Skipping: Creating zip is failed. See log for more info."
 }
