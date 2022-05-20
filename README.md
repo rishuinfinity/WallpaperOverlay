@@ -25,6 +25,7 @@ A Gnome extension to apply overlays on wallpaper.
 Original                   |  Modified
 :-------------------------:|:-------------------------:
 ![Screenshot](screenshots/1.png)  |  ![Screenshot](screenshots/2.png)
+
 ![Screenshot](screenshots/3.png)
 
 
