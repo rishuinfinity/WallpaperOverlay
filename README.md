@@ -26,7 +26,11 @@ Original                   |  Modified
 :-------------------------:|:-------------------------:
 ![Screenshot](screenshots/1.png)  |  ![Screenshot](screenshots/2.png)
 
-![Screenshot](screenshots/3.png)
+<p align="center">
+  <img src="screenshots/3.png" />
+</p>
+
+<!-- ![Screenshot](screenshots/3.png) -->
 
 
 <!-- ## Updates
