@@ -22,7 +22,7 @@ A Gnome extension to apply overlays on wallpaper.
 
 ## Screenshots
 
-<img src="screenshots/1.jpg" alt="screenshots/1.jpg" style="width:50%; float:left"/>
+<img src="screenshots/1.png" alt="screenshots/1.jpg" style="width:50%; float:left"/>
 <img src="screenshots/2.png" alt="screenshots/2.png" style="width:50%; float:right"/>
 <img src="screenshots/3.png" alt="screenshots/3.png" style="width:100%"/>
 <!-- ![Screenshot](screenshots/1.jpg | width=100)
