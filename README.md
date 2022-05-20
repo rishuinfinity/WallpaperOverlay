@@ -9,6 +9,7 @@ A Gnome extension to apply overlays on wallpaper.
   - [Screenshots](#screenshots)
   - [Motivation](#motivation)
   - [Features](#features)
+  - [Overlay Creating Guide](#overlay-creating-guide)
   - [Getting Started](#getting-started)
     - [Prerequisite: Install Gnome Tweaks](#prerequisite-install-gnome-tweaks)
     - [Prerequisite: Install Gnome Extensions Manager or Gnome Extensions](#prerequisite-install-gnome-extensions-manager-or-gnome-extensions)
@@ -54,15 +55,23 @@ This extension has following features:
 - Apply an overlay on wallpaper in four easy steps
   - Choose image : Either take the currently set wallpaper or choose it manually through the file picker
   - Choose overlay : Either choose it from the default library or select a custom svg/png overlay
-  - Choose color : Each overlay has one colour that can be modified to the colour you choose here. In the svg file this colour is #0000ff
+  - Choose color : Each svg overlay can have one colour that can be modified to the colour you choose here.
   - Click apply and the overlay will be applied and wallpaper will be set.
 - You can even apply multiple overlays by:
   - Apply one overlay
   - Reselect current set wallpaper
   - Apply second overlay and so on.
-- You can create your own svg/ png overlays in inkscape and apply them. Copy any overlay file present in /src/resources/ in this repo and edit it in inkspace to create your own overlay file.
-  - Note: The color #0000ff in the svg overlay file will be replaced by the user selected color.
-  - Note: Some features of svg are not supported by the cairosvg library used like blur, mesh, etc. There is still one trick. After using features like blur, convert your svg into png using inkscape and import it into a new svg and make further changes.
+
+## Overlay Creating Guide
+
+This extension has following features:
+
+- You can create an overlay with your ideas preety easily
+- I recommend to copy any overlay file from /src/resources or from Public Overlay collection. Then edit it in any svg editor like inkscape. 
+- If you want to have the option to change one color, you can set the changeable color to #0000ff. This color in the whole svg gets replaced while applying overlay.
+- Note: Some features of svg are not supported by Cairosvg library used 
+  - Some features like blur, mesh gradient, etc are not supported by cairosvg. But there is still one trick. 
+  - After using features like blur, export your blurred element as png and then import it back into the svg file. The png version would be rendered correctly.
 
 ## Getting Started
 
