@@ -53,15 +53,16 @@ This extension has following features:
 
 - Apply an overlay on wallpaper in four easy steps
   - Choose image : Either take the currently set wallpaper or choose it manually through the file picker
-  - Choose overlay : Either choose it from the default library or select a custom svg overlay
+  - Choose overlay : Either choose it from the default library or select a custom svg/png overlay
   - Choose color : Each overlay has one colour that can be modified to the colour you choose here. In the svg file this colour is #0000ff
   - Click apply and the overlay will be applied and wallpaper will be set.
 - You can even apply multiple overlays by:
   - Apply one overlay
   - Reselect current set wallpaper
   - Apply second overlay and so on.
-- You can create your own svg overlays in inkspace and apply them. Copy any overlay file present in /src/resources/ in this repo and edit it in inkspace to create your own overlay file.
-  - Note: The color #0000ff in the overlay file will be replaced by the user selected color.
+- You can create your own svg/ png overlays in inkscape and apply them. Copy any overlay file present in /src/resources/ in this repo and edit it in inkspace to create your own overlay file.
+  - Note: The color #0000ff in the svg overlay file will be replaced by the user selected color.
+  - Note: Some features of svg are not supported by the cairosvg library used like blur, mesh, etc. There is still one trick. After using features like blur, convert your svg into png using inkscape and import it into a new svg and make further changes.
 
 ## Getting Started
 
