@@ -84,7 +84,12 @@ function saveExceptionLog(e){
 function createOverlay(overlay_path){
   let overlay_color = Settings.get_string('overlay-color');
   let ext_check = overlay_path.split(".");
+  if(ext_check[ext_check.length-1] == "png"){
+    modOverlay = overlay_path;
+    return ["png Overlay ready",1];
+  }
   if(ext_check[ext_check.length-1] != "svg") return ["Overlay is not an svg file",0];
+  modOverlay = Me.path + "/temp/modOverlay.svg";
   let svg_file      = String(GLib.file_get_contents(overlay_path)[1]);
   svg_file          = svg_file.replaceAll("#0000ff",overlay_color);
   let new_file      = Gio.file_new_for_path( modOverlay );
@@ -103,9 +108,9 @@ function createWallpaper(){
     modWallpaper2 = temp;
   }
   let command           = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ modOverlay + "' '"+ modWallpaper + "'";
-  saveExceptionLog("Terminal: " + command);
+  // saveExceptionLog("Terminal: " + command);
   var [ok,out,err,exit] = GLib.spawn_command_line_sync(command);
-  if (out == "None\n")
+  if (out == "Done\n")
   return ["Overlay Applied on Wallpaper",1];
   return [out + err + "\n",0];
 }

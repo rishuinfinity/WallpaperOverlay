@@ -1,8 +1,6 @@
 .error{
     color:red;
 }
-
-.combo-box{
-    overflow: scroll;
-    -GtkComboBox-appears-as-list: 1;
+.image{
+    width: 400px;
 }

@@ -6,8 +6,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me             = ExtensionUtils.getCurrentExtension();
 const extension      = Me.imports.extension;
 
-// Temporary Variables
-let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+// // Temporary Variables
+// let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
 
 function init() {
 }
@@ -17,7 +17,7 @@ function init() {
 function shrink_string(s){
     if (s.length < 35)
     return s;
-    return s.substr(0,16)+"..."+s.substr(-16,16);
+    return "..." + s.substr(-32);
 }
 
 /////////////////////////////////////////
@@ -76,26 +76,37 @@ function cssHexString(css) {
 // Build the Preference Widget
 
 function buildPrefsWidget() {
+    /////////////////////////////////////////
     // Create a parent widget that we'll return from this function
     this.settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
     let prefsWidget = new Gtk.Grid({
-        margin_start   : 40,
-        margin_end     : 40,  
-        margin_top     : 40,
-        margin_bottom  : 40,
+        margin_start   : 20,
+        margin_end     : 20,  
+        margin_top     : 20,
+        margin_bottom  : 20,
         column_spacing : 20,
         row_spacing    : 12,
         visible        : true,
         halign         : Gtk.Align.CENTER,
     });
     let Image = new Gtk.Image({
-        visible:true,
-        can_focus: false,
-        hexpand: true,
-        vexpand: true
+        visible        :true,
+        can_focus      : false,
+        hexpand        : true,
+        vexpand        : true,
+        css_classes    : ['image'],
     });
     Image.set_from_file(this.settings.get_string("picture-uri")); 
 
+    // let Overlay = new Gtk.Image({
+    //     visible:true,
+    //     can_focus: false,
+    //     hexpand: true,
+    //     vexpand: true
+    // });
+    // update_overlay_image();
+
+    /////////////////////////////////////////
     // Create a label & input for `image path`
     let imagepathLabel = new Gtk.Label({
         label      : '<b>Choose Image:</b>',
@@ -106,7 +117,7 @@ function buildPrefsWidget() {
     let imageButton = new Gtk.Button({
         label      : shrink_string(this.settings.get_string("picture-uri")),
         valign     : Gtk.Align.CENTER,
-        halign     : Gtk.Align.END,
+        halign     : Gtk.Align.FILL,
     });
     imageButton.connect('clicked', ()=> {
         _showFileChooser(
@@ -136,6 +147,7 @@ function buildPrefsWidget() {
         Image.set_from_file(this.settings.get_string("picture-uri")); 
     });
 
+    /////////////////////////////////////////
     // Overlay Menu
     let OverlayOptions = {};
     try{
@@ -172,37 +184,16 @@ function buildPrefsWidget() {
     let overlayMenuDropDown = new Gtk.DropDown({
         enable_search : false,
         model : overlayDropDownList,
+        sensitive  : !this.settings.get_boolean('is-custom-overlay'),
         selected: this.settings.get_int("overlay-style") || 0
     })
-    
+    function set_overlay_menu_sensitivity(val){
+        overlayMenuLabel.sensitive = val;
+        overlayMenuDropDown.sensitive = val;
+    }
 
-    // Create a label & input for custom `overlay path`
-    let overlayPathLabel = new Gtk.Label({
-        label      : '<b>Custom Overlay Image:</b> (absolute)',
-        halign     : Gtk.Align.START,
-        use_markup : true,
-        sensitive  : this.settings.get_boolean('is-custom-overlay')
-    });
-    let overlayPathButton = new Gtk.Button({
-        label      : shrink_string(this.settings.get_string("overlay-uri")),
-        valign     : Gtk.Align.CENTER,
-        halign     : Gtk.Align.END,
-        sensitive  : this.settings.get_boolean('is-custom-overlay')
-    });
-    overlayPathButton.connect('clicked', ()=> {
-        _showFileChooser(
-            'Select Overlay File (.svg)',
-            {action: Gtk.FileChooserAction.OPEN },
-            "Open",
-            filename => {
-                this.settings.set_string("overlay-uri",filename);
-                overlayPathButton.label = shrink_string(filename);
-            },
-            this.settings.get_string("overlay-uri")
-        );
-    })
-
-    // Create a button for custom overlay selection
+    /////////////////////////////////////////
+    // Create a toggle for custom overlay selection
     let customOverlayLabel = new Gtk.Label({
         label      : '<b>Use Custom Overlay Image:</b>',
         halign     : Gtk.Align.START,
@@ -215,24 +206,74 @@ function buildPrefsWidget() {
         hexpand    : true,
         visible    : true
     });
-    function customOverlayToggleOrganiseMenu(settings){
-        // I dont know why but the boolean values are somehow sent reversed here, hence the opposite assignment
-        overlayMenuLabel.sensitive  = settings.get_boolean('is-custom-overlay');
-        overlayMenuDropDown.sensitive = settings.get_boolean('is-custom-overlay');
-        overlayPathLabel.sensitive  = !settings.get_boolean('is-custom-overlay');
-        overlayPathButton.sensitive = !settings.get_boolean('is-custom-overlay');
-    }
     this.settings.bind(
         'is-custom-overlay',
         customOverlayToggle,
         'active',
         Gio.SettingsBindFlags.DEFAULT
     );
-    customOverlayToggle.connect("state-set",() => {customOverlayToggleOrganiseMenu(this.settings);});
+    customOverlayToggle.connect("state-set",() => {
+        // I dont know why but the boolean values are somehow sent reversed here, hence the opposite assignment
+        if (customOverlayToggle.get_state() == true){
+            set_overlay_menu_sensitivity(true);
+            set_custom_overlay_sensitivity(false);
+            set_color_sensitivity(true);
+        }
+        else{
+            set_overlay_menu_sensitivity(false);
+            set_custom_overlay_sensitivity(true);
+            if (this.settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
+            else set_color_sensitivity(false)
+        }
+    });
 
+    /////////////////////////////////////////
+    // Create a label & input for custom `overlay path`
+    let overlayPathLabel = new Gtk.Label({
+        label      : '<b>Custom Overlay Image:</b>  (svg/png)',
+        halign     : Gtk.Align.START,
+        use_markup : true,
+        sensitive  : this.settings.get_boolean('is-custom-overlay')
+    });
+    let overlayPathButton = new Gtk.Button({
+        label      : shrink_string(this.settings.get_string("overlay-uri")),
+        valign     : Gtk.Align.CENTER,
+        halign     : Gtk.Align.FILL,
+        sensitive  : this.settings.get_boolean('is-custom-overlay')
+    });
+    overlayPathButton.connect('clicked', ()=> {
+        _showFileChooser(
+            'Select Overlay File (.svg)',
+            {action: Gtk.FileChooserAction.OPEN },
+            "Open",
+            filename => {
+                this.settings.set_string("overlay-uri",filename);
+                overlayPathButton.label = shrink_string(filename);
+                if (filename.substr(-3) == "svg") set_color_sensitivity(true)
+                else set_color_sensitivity(false)
+            },
+            this.settings.get_string("overlay-uri")
+        );
+    })
+    function set_custom_overlay_sensitivity(val){
+        overlayPathLabel.sensitive = val;
+        overlayPathButton.sensitive= val;
+    }
+    // function update_overlay_image(){};
+    // update_overlay_image = () =>{
+    //     if(this.settings.get_boolean('is-custom-overlay')){
+    //         Overlay.set_from_file(this.settings.get_string("overlay-uri"));
+    //     }
+    //     else{
+    //         let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[this.settings.get_int('overlay-style')]];
+    //         Overlay.set_from_file(overlay_path);
+    //     }
+    // };
+
+    /////////////////////////////////////////
     // Create a label & imput for color
     let changeColorLabel = new Gtk.Label({
-        label      : '<b>Set Overlay Color:</b>',
+        label      : '<b>Set Overlay Primary Color:</b>',
         halign     : Gtk.Align.START,
         use_markup : true,
         visible    : true
@@ -265,6 +306,14 @@ function buildPrefsWidget() {
     colorinp.append(colorlabel);
     colorinp.append(colorentry);
 
+    function set_color_sensitivity(val){
+        colorinp.sensitive = val;
+        changeColorLabel.sensitive = val;
+    }
+    if (this.settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
+    else set_color_sensitivity(false)
+
+    /////////////////////////////////////////
     // Error msgs
     let ErrorMsg   = new Gtk.TextBuffer({
         text       : ''
@@ -282,6 +331,7 @@ function buildPrefsWidget() {
         
     });
 
+    /////////////////////////////////////////
     // Apply Button
     let applyButton = new Gtk.Button({
         label      : "Apply Wallpaper",
@@ -299,8 +349,9 @@ function buildPrefsWidget() {
         ErrorMsg.text = String(response);
     });
 
+    /////////////////////////////////////////
     // attach elements to positions
-    prefsWidget.attach(Image,              0, 1, 3, 1); //prefsWidget.attach(Overlay,            1, 1, 1, 1);
+    prefsWidget.attach(Image,              0, 1, 3, 1);                                                         //prefsWidget.attach(Overlay,             2, 1, 1, 1);
     prefsWidget.attach(imagepathLabel,     0, 2, 1, 1); prefsWidget.attach(getCurrentWallpaper, 1, 2, 1, 1);    prefsWidget.attach(imageButton,         2, 2, 1, 1);
     prefsWidget.attach(overlayMenuLabel,   0, 3, 1, 1);                                                         prefsWidget.attach(overlayMenuDropDown, 2, 3, 1, 1);
     prefsWidget.attach(customOverlayLabel, 0, 4, 1, 1);                                                         prefsWidget.attach(customOverlayToggle, 2, 4, 1, 1);
@@ -309,7 +360,10 @@ function buildPrefsWidget() {
                                                         prefsWidget.attach(applyButton,        0, 7, 3, 1);
                                                         prefsWidget.attach(ErrorLabel,         0, 8, 3, 1);
 
+    /////////////////////////////////////////
     // Return our widget which will be added to the window
+    // PS: I wasn't able to resize the prefs window, I wanted to make the height of the prefs window a little bigger
+    // so that the image is a little bigger as well. I tried adding height_request in gtk.grid but it didn't work.
     return prefsWidget;
 }
 

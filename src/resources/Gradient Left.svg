@@ -8,7 +8,7 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
-   sodipodi:docname="top_gradient_straight.svg"
+   sodipodi:docname="left_gradient.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -29,9 +29,9 @@
      inkscape:snap-page="true"
      inkscape:zoom="0.53354917"
      inkscape:cx="952.11469"
-     inkscape:cy="515.41641"
+     inkscape:cy="588.51183"
      inkscape:window-width="1920"
-     inkscape:window-height="1019"
+     inkscape:window-height="1026"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -43,7 +43,7 @@
        inkscape:collect="always"
        id="linearGradient960">
       <stop
-         style="stop-color:#1c1e26;stop-opacity:1"
+         style="stop-color:#0000ff;stop-opacity:1"
          offset="0"
          id="stop956" />
       <stop
@@ -60,19 +60,19 @@
        x2="243.77669"
        y2="185.47295"
        gradientUnits="userSpaceOnUse"
-       gradientTransform="matrix(1,0,0,1.2192208,0,-348.39232)" />
+       gradientTransform="matrix(0.5625,0,0,1.3599998,-5.4913613e-6,-388.61992)" />
   </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
     <rect
-       style="fill:url(#linearGradient964);fill-opacity:1;stroke-width:1.10419;stroke-linecap:round;paint-order:markers fill stroke"
+       style="fill:url(#linearGradient964);fill-opacity:1;stroke-width:0.874649;stroke-linecap:round;paint-order:markers fill stroke"
        id="rect924"
-       width="508"
-       height="122.84004"
+       width="285.75"
+       height="137.02394"
        x="0"
-       y="-122.84004"
-       transform="scale(1,-1)" />
+       y="-137.02394"
+       transform="rotate(90)" />
   </g>
 </svg>
