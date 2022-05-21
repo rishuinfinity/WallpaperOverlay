@@ -43,10 +43,11 @@ function modifySetting(schema_path, setting_id, setting_value){
 
 function setWallpaper(path){
   path = "file://" + path;
-  var [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri", path);
+  var msg,response;
+  [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri", path);
   if (response == 0) return [msg,0];
   if (shellVersion >= 42){
-    var [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri-dark", path);
+    [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri-dark", path);
     if (response == 0) return [msg,0];
   }
   return ["Wallpaper Set",1];
@@ -65,7 +66,7 @@ function setWallpaper(path){
 function saveExceptionLog(e){
   let log_file = Gio.file_new_for_path( 
   home_dir + '/.local/var/log/WallpaperOverlay.log' );
-  try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
+  // try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
 
   let log_file_size =  log_file.query_info( 
     'standard::size', 0, null).get_size();
@@ -117,13 +118,14 @@ function createWallpaper(){
 
 function applyWallpaper(overlay_path){
   try{
-  var [msg,response] = createOverlay(overlay_path);
+  var msg,response;
+  [msg,response] = createOverlay(overlay_path);
   if (response == 0) return msg;
-  var [msg,response] = createWallpaper();
+  [msg,response] = createWallpaper();
   if (response == 0) return msg;
-  var [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
+  [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
   if (response == 0) return msg;
-  var [msg,response] = setWallpaper(modWallpaper);
+  [msg,response] = setWallpaper(modWallpaper);
   if (response == 0) return msg;
   return "Applied"
   } catch (e)
@@ -137,9 +139,17 @@ function applyWallpaper(overlay_path){
 // Extension functions
 
 function init() {
+  let log_file = Gio.file_new_for_path( 
+  home_dir + '/.local/var/log/WallpaperOverlay.log' );
+  try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
+  let temp_file= Gio.file_new_for_path(
+    Me.path + "/temp/"
+  );
+  try{temp_file.make_directory(null);} catch{}
 }
 
 function enable() {
+  
 }
 
 function disable() {

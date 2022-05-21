@@ -165,6 +165,7 @@ function buildPrefsWidget() {
             }
             }
         }
+        OverlayOptions = Object.keys(OverlayOptions).sort().reduce((r, k) => (r[k] = OverlayOptions[k], r), {});
     }
     catch(e){
         extension.saveExceptionLog(e);
@@ -310,7 +311,7 @@ function buildPrefsWidget() {
         colorinp.sensitive = val;
         changeColorLabel.sensitive = val;
     }
-    if (this.settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
+    if (!this.settings.get_boolean("is-custom-overlay") || this.settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
     else set_color_sensitivity(false)
 
     /////////////////////////////////////////
