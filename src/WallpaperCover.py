@@ -31,7 +31,9 @@ def create_overlay(image,overlay,out_path):
         overlay = overlay+".png"
     # resize image to match screen resolution
     img = Image.open(image)
-    screen_width, screen_height= ImageGrab.grab().size
+    # screen_width, screen_height= ImageGrab.grab().size
+    screen_width = 1920
+    screen_height= 1080
     w,h = img.size
     x = min(w//16,h//9)
     nw,nh = 16*x,9*x
