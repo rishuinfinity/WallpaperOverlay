@@ -1,6 +1,6 @@
 /*
 * Name: Wallpaper Overlay
-* Description: Extension to add overlay masks on desktop wallpaper
+* Description: Extension to add overlays on desktop wallpaper
 * Author: Rishu Raj
 */
 "use strict";
@@ -20,7 +20,11 @@ let Settings     = ExtensionUtils.getSettings('org.gnome.shell.extensions.Wallpa
 let modWallpaper = Me.path + "/temp/modWallpaper.png";
 let modWallpaper2= Me.path + "/temp/modWallpaper2.png";
 let modOverlay   = Me.path + "/temp/modOverlay.svg";
+let resizedImage = Me.path + "/temp/resizedImage.png";
+let pngOverlay   = Me.path + "/temp/pngOverlay.png";
 let logSize      = 8000; // about 8k
+let log_file = Gio.file_new_for_path( home_dir + '/.local/var/log/WallpaperOverlay.log' );
+let temp_file= Gio.file_new_for_path( Me.path + "/temp/");
 
 /////////////////////////////////////////
 // Important functions
@@ -53,21 +57,7 @@ function setWallpaper(path){
   return ["Wallpaper Set",1];
 }
 
-// Couldn't do it in gjs, so had to import another library in python to do it
-// function SvgtoPng(overlay_path){
-//   const image = new Gtk.Image()
-//   saveExceptionLog("Gtk Image Failed");
-//   image.set_from_file(Me.path + "/overlay.svg");
-//   saveExceptionLog("getpixbuf Failed");
-//   let pb = image.get_pixbuf();
-//   saveExceptionLog(pb.savev(Me.path + "/overlay.png","png",[],[]));
-// }
-
 function saveExceptionLog(e){
-  let log_file = Gio.file_new_for_path( 
-  home_dir + '/.local/var/log/WallpaperOverlay.log' );
-  // try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
-
   let log_file_size =  log_file.query_info( 
     'standard::size', 0, null).get_size();
   if( log_file_size > logSize ){
@@ -84,12 +74,13 @@ function saveExceptionLog(e){
 
 function createOverlay(overlay_path){
   let overlay_color = Settings.get_string('overlay-color');
-  let ext_check = overlay_path.split(".");
-  if(ext_check[ext_check.length-1] == "png"){
+  let ext_check = overlay_path.split(".").pop();
+  if(ext_check == "png"){
     modOverlay = overlay_path;
     return ["png Overlay ready",1];
   }
-  if(ext_check[ext_check.length-1] != "svg") return ["Overlay is not an svg file",0];
+  if(ext_check != "svg") return ["Overlay is not an svg file",0];
+  // Now change the color in the svg overlay
   modOverlay = Me.path + "/temp/modOverlay.svg";
   let svg_file      = String(GLib.file_get_contents(overlay_path)[1]);
   svg_file          = svg_file.replaceAll("#0000ff",overlay_color);
@@ -97,7 +88,7 @@ function createOverlay(overlay_path){
   try{new_file.create(Gio.FileCreateFlags.NONE, null);} catch{} // if not present, create a new file
   new_file.replace_contents(svg_file, null, false,
   Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-  return ["Overlay Created \n",1];
+  return ["Overlay Ready",1];
 }
 
 function createWallpaper(){
@@ -108,29 +99,28 @@ function createWallpaper(){
     modWallpaper  = modWallpaper2;
     modWallpaper2 = temp;
   }
-  let command           = Me.path + "/WallpaperCover.py '"+image_path + "' '"+ modOverlay + "' '"+ modWallpaper + "'";
-  // saveExceptionLog("Terminal: " + command);
+  let command = `convert \( "${image_path}" -resize 1920x1080 \) \( -background none "${modOverlay}" -resize 1920x1080 \) -composite -format png "${modWallpaper}"`
   var [ok,out,err,exit] = GLib.spawn_command_line_sync(command);
-  if (out == "Done\n")
-  return ["Overlay Applied on Wallpaper",1];
-  return [out + err + "\n",0];
+  return (out == ""  && err == ""? ["Overlay Applied on Wallpaper",1] : [ok + " - " + out + " - " + err + "\n",0]);
 }
 
 function applyWallpaper(overlay_path){
   try{
   var msg,response;
+  [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
+  if (response == 0) return msg;
   [msg,response] = createOverlay(overlay_path);
   if (response == 0) return msg;
   [msg,response] = createWallpaper();
   if (response == 0) return msg;
-  [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
-  if (response == 0) return msg;
   [msg,response] = setWallpaper(modWallpaper);
   if (response == 0) return msg;
-  return "Applied"
+  return "Applied";
   } catch (e)
   {
     saveExceptionLog(e);
+    if(String(e).includes('“convert” (No such file or directory)'))
+    return "Error : Please install the dependency 'ImageMagick' using your default package manager. Visit \n https://imagemagick.org/script/download.php \n to know more."
     return "Error : "+ e;
   }
 }
@@ -139,12 +129,7 @@ function applyWallpaper(overlay_path){
 // Extension functions
 
 function init() {
-  let log_file = Gio.file_new_for_path( 
-  home_dir + '/.local/var/log/WallpaperOverlay.log' );
   try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
-  let temp_file= Gio.file_new_for_path(
-    Me.path + "/temp/"
-  );
   try{temp_file.make_directory(null);} catch{}
 }
 

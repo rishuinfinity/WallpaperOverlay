@@ -78,7 +78,7 @@ function cssHexString(css) {
 function buildPrefsWidget() {
     /////////////////////////////////////////
     // Create a parent widget that we'll return from this function
-    this.settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+    let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
     let prefsWidget = new Gtk.Grid({
         margin_start   : 20,
         margin_end     : 20,  
@@ -96,7 +96,7 @@ function buildPrefsWidget() {
         vexpand        : true,
         css_classes    : ['image'],
     });
-    Image.set_from_file(this.settings.get_string("picture-uri")); 
+    Image.set_from_file(Settings.get_string("picture-uri")); 
 
     // let Overlay = new Gtk.Image({
     //     visible:true,
@@ -115,7 +115,7 @@ function buildPrefsWidget() {
         visible    : true
     });
     let imageButton = new Gtk.Button({
-        label      : shrink_string(this.settings.get_string("picture-uri")),
+        label      : shrink_string(Settings.get_string("picture-uri")),
         valign     : Gtk.Align.CENTER,
         halign     : Gtk.Align.FILL,
     });
@@ -125,11 +125,11 @@ function buildPrefsWidget() {
             { action: Gtk.FileChooserAction.OPEN },
             "Open",
             filename => {
-                this.settings.set_string("picture-uri",filename);
+                Settings.set_string("picture-uri",filename);
                 imageButton.label = shrink_string(filename);
-                Image.set_from_file(this.settings.get_string("picture-uri"));
+                Image.set_from_file(Settings.get_string("picture-uri"));
             },
-            this.settings.get_string("picture-uri")
+            Settings.get_string("picture-uri")
         );
         
     })
@@ -142,9 +142,9 @@ function buildPrefsWidget() {
     getCurrentWallpaper.connect('clicked',()=>{
         let setting = new Gio.Settings({schema: "org.gnome.desktop.background"});
         let wlpapr  = setting.get_string("picture-uri").substr(7,);
-        this.settings.set_string("picture-uri",wlpapr);
+        Settings.set_string("picture-uri",wlpapr);
         imageButton.label = shrink_string(wlpapr);
-        Image.set_from_file(this.settings.get_string("picture-uri")); 
+        Image.set_from_file(Settings.get_string("picture-uri")); 
     });
 
     /////////////////////////////////////////
@@ -174,7 +174,7 @@ function buildPrefsWidget() {
         label      : '<b>Overlay:</b>',
         halign     : Gtk.Align.START,
         use_markup : true,
-        sensitive  : !this.settings.get_boolean('is-custom-overlay'),
+        sensitive  : !Settings.get_boolean('is-custom-overlay'),
     });
 
     let overlayDropDownList = new Gtk.StringList({})
@@ -185,8 +185,8 @@ function buildPrefsWidget() {
     let overlayMenuDropDown = new Gtk.DropDown({
         enable_search : false,
         model : overlayDropDownList,
-        sensitive  : !this.settings.get_boolean('is-custom-overlay'),
-        selected: this.settings.get_int("overlay-style") || 0
+        sensitive  : !Settings.get_boolean('is-custom-overlay'),
+        selected: Settings.get_int("overlay-style") || 0
     })
     function set_overlay_menu_sensitivity(val){
         overlayMenuLabel.sensitive = val;
@@ -207,7 +207,7 @@ function buildPrefsWidget() {
         hexpand    : true,
         visible    : true
     });
-    this.settings.bind(
+    Settings.bind(
         'is-custom-overlay',
         customOverlayToggle,
         'active',
@@ -223,7 +223,7 @@ function buildPrefsWidget() {
         else{
             set_overlay_menu_sensitivity(false);
             set_custom_overlay_sensitivity(true);
-            if (this.settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
+            if (Settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
             else set_color_sensitivity(false)
         }
     });
@@ -234,13 +234,13 @@ function buildPrefsWidget() {
         label      : '<b>Custom Overlay Image:</b>  (svg/png)',
         halign     : Gtk.Align.START,
         use_markup : true,
-        sensitive  : this.settings.get_boolean('is-custom-overlay')
+        sensitive  : Settings.get_boolean('is-custom-overlay')
     });
     let overlayPathButton = new Gtk.Button({
-        label      : shrink_string(this.settings.get_string("overlay-uri")),
+        label      : shrink_string(Settings.get_string("overlay-uri")),
         valign     : Gtk.Align.CENTER,
         halign     : Gtk.Align.FILL,
-        sensitive  : this.settings.get_boolean('is-custom-overlay')
+        sensitive  : Settings.get_boolean('is-custom-overlay')
     });
     overlayPathButton.connect('clicked', ()=> {
         _showFileChooser(
@@ -248,12 +248,12 @@ function buildPrefsWidget() {
             {action: Gtk.FileChooserAction.OPEN },
             "Open",
             filename => {
-                this.settings.set_string("overlay-uri",filename);
+                Settings.set_string("overlay-uri",filename);
                 overlayPathButton.label = shrink_string(filename);
                 if (filename.substr(-3) == "svg") set_color_sensitivity(true)
                 else set_color_sensitivity(false)
             },
-            this.settings.get_string("overlay-uri")
+            Settings.get_string("overlay-uri")
         );
     })
     function set_custom_overlay_sensitivity(val){
@@ -262,11 +262,11 @@ function buildPrefsWidget() {
     }
     // function update_overlay_image(){};
     // update_overlay_image = () =>{
-    //     if(this.settings.get_boolean('is-custom-overlay')){
-    //         Overlay.set_from_file(this.settings.get_string("overlay-uri"));
+    //     if(Settings.get_boolean('is-custom-overlay')){
+    //         Overlay.set_from_file(Settings.get_string("overlay-uri"));
     //     }
     //     else{
-    //         let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[this.settings.get_int('overlay-style')]];
+    //         let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[Settings.get_int('overlay-style')]];
     //         Overlay.set_from_file(overlay_path);
     //     }
     // };
@@ -286,7 +286,7 @@ function buildPrefsWidget() {
         homogeneous: false,
     });
     let colorlabel = new Gtk.Label({
-        label      : this.settings.get_string('overlay-color'),
+        label      : Settings.get_string('overlay-color'),
         halign     : Gtk.Align.END,
         use_markup : true,
         visible    : true
@@ -297,11 +297,11 @@ function buildPrefsWidget() {
         halign     : Gtk.Align.END,
     });
     let rgba = colorentry.get_rgba();
-    rgba.parse(this.settings.get_string('overlay-color'));
+    rgba.parse(Settings.get_string('overlay-color'));
     colorentry.set_rgba(rgba);
     colorentry.connect('color-set',() => {
         let color = cssHexString(colorentry.get_rgba().to_string());
-        this.settings.set_string('overlay-color',color);
+        Settings.set_string('overlay-color',color);
         colorlabel.label = color;
     });
     colorinp.append(colorlabel);
@@ -311,14 +311,14 @@ function buildPrefsWidget() {
         colorinp.sensitive = val;
         changeColorLabel.sensitive = val;
     }
-    if (!this.settings.get_boolean("is-custom-overlay") || this.settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
+    if (!Settings.get_boolean("is-custom-overlay") || Settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
     else set_color_sensitivity(false)
 
     /////////////////////////////////////////
     // Error msgs
     let ErrorMsg   = new Gtk.TextBuffer({
         text       : ''
-    })
+    });
     let ErrorLabel = new Gtk.TextView({
         buffer         : ErrorMsg,
         editable       : false,
@@ -328,8 +328,8 @@ function buildPrefsWidget() {
         right_margin   : 10,
         monospace      : true,
         cursor_visible : false,
-        justification  : Gtk.Justification.CENTER
-        
+        justification  : Gtk.Justification.CENTER,
+        wrap_mode      : Gtk.WrapMode.WORD
     });
 
     /////////////////////////////////////////
@@ -341,10 +341,10 @@ function buildPrefsWidget() {
     });
     applyButton.connect('clicked', () => {
         ErrorMsg.text = "Applying...";
-        this.settings.set_int("overlay-style", overlayMenuDropDown.selected);
-        let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[this.settings.get_int('overlay-style')]];
-        if (this.settings.get_boolean('is-custom-overlay')){
-            overlay_path = this.settings.get_string('overlay-uri');
+        Settings.set_int("overlay-style", overlayMenuDropDown.selected);
+        let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[Settings.get_int('overlay-style')]];
+        if (Settings.get_boolean('is-custom-overlay')){
+            overlay_path = Settings.get_string('overlay-uri');
         }
         let response     = extension.applyWallpaper(overlay_path);
         ErrorMsg.text = String(response);
