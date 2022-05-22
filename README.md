@@ -15,6 +15,7 @@ A Gnome extension to apply overlays on wallpaper.
     - [Prerequisite: Install Gnome Extensions Manager or Gnome Extensions](#prerequisite-install-gnome-extensions-manager-or-gnome-extensions)
       - [Setting Up Gnome Extensions Manager](#setting-up-gnome-extensions-manager)
       - [Setting Up Gnome Extensions](#setting-up-gnome-extensions)
+    - [Prerequisite: Install ImageMagick](#prerequisite-install-imagemagick)
     - [Install Wallpaper Switcher from Gnome Extensions](#install-wallpaper-switcher-from-gnome-extensions)
     - [Install Wallpaper Switcher from source](#install-wallpaper-switcher-from-source)
   - [Contributing](#contributing)
@@ -54,7 +55,7 @@ This extension has following features:
 
 - Apply an overlay on wallpaper in four easy steps
   - Choose image : Either take the currently set wallpaper or choose it manually through the file picker
-  - Choose overlay : Either choose it from the default library or select a custom svg/png overlay
+  - Choose overlay : Either choose it from the default drop-down or select a custom svg/png overlay
   - Choose color : Each svg overlay can have one colour that can be modified to the colour you choose here.
   - Click apply and the overlay will be applied and wallpaper will be set.
 - You can even apply multiple overlays by:
@@ -67,11 +68,9 @@ This extension has following features:
 This extension has following features:
 
 - You can create an overlay with your ideas preety easily
-- I recommend to copy any overlay file from /src/resources or from Public Overlay collection. Then edit it in any svg editor like inkscape. 
+- I recommend to copy any overlay file from /src/resources or from Public Overlay collection. Then edit it in any svg editor like inkscape.
 - If you want to have the option to change one color, you can set the changeable color to #0000ff. This color in the whole svg gets replaced while applying overlay.
-- Note: Some features of svg are not supported by Cairosvg library used 
-  - Some features like blur, mesh gradient, etc are not supported by cairosvg. But there is still one trick. 
-  - After using features like blur, export your blurred element as png and then import it back into the svg file. The png version would be rendered correctly.
+- You can even create a transparent png to use as an overlay.
 
 ## Getting Started
 
@@ -155,6 +154,10 @@ You may find Gnome Extension for other distributions as well. Install them accor
 After installation, open your browser and go to [Gnome Extension Website](https://extensions.gnome.org)
 
 You would be asked to add a browser extension, install the extension. Now you are ready to install Gnome Extensions.
+
+### Prerequisite: Install ImageMagick
+
+Usually ImageMagick is pre-installed in most of the distros. If not, you will have to install it manually. Visit [ImageMagick website](https://imagemagick.org/script/download.php) to know how to install.
 
 ### Install Wallpaper Switcher from Gnome Extensions
 
