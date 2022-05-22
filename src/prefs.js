@@ -1,13 +1,16 @@
+/*
+* Name: Wallpaper Overlay
+* Description: Extension to add overlays on desktop wallpaper
+* Author: Rishu Raj
+*/
 "use strict";
+//Const Variables
 const Gio            = imports.gi.Gio;
 const Gtk            = imports.gi.Gtk;
 const Gdk            = imports.gi.Gdk;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me             = ExtensionUtils.getCurrentExtension();
-const extension      = Me.imports.extension;
-
-// // Temporary Variables
-// let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+const lib            = Me.imports.lib;
 
 function init() {
 }
@@ -94,7 +97,6 @@ function buildPrefsWidget() {
         can_focus      : false,
         hexpand        : true,
         vexpand        : true,
-        css_classes    : ['image'],
     });
     Image.set_from_file(Settings.get_string("picture-uri")); 
 
@@ -149,26 +151,13 @@ function buildPrefsWidget() {
 
     /////////////////////////////////////////
     // Overlay Menu
+
     let OverlayOptions = {};
     try{
-        let resfolder  = Gio.file_new_for_path(Me.path + "/resources/");
-        let enumerator = resfolder.enumerate_children("standard::name, standard::type",Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
-        let child;
-        while ((child = enumerator.next_file(null))){
-            // check if it is a file
-            if( child.get_file_type() == Gio.FileType.REGULAR)
-            {
-            // check extension
-            let split = child.get_name().split(".");
-            if  (split.pop() == "svg"){
-                OverlayOptions[split.join("")]= "/resources/"+child.get_name();
-            }
-            }
-        }
-        OverlayOptions = Object.keys(OverlayOptions).sort().reduce((r, k) => (r[k] = OverlayOptions[k], r), {});
+        OverlayOptions = lib.get_overlay_dropdown_options();
     }
     catch(e){
-        extension.saveExceptionLog(e);
+        lib.saveExceptionLog(e);
     }
     let overlayMenuLabel = new Gtk.Label({
         label      : '<b>Overlay:</b>',
@@ -346,7 +335,7 @@ function buildPrefsWidget() {
         if (Settings.get_boolean('is-custom-overlay')){
             overlay_path = Settings.get_string('overlay-uri');
         }
-        let response     = extension.applyWallpaper(overlay_path);
+        let response     = lib.applyWallpaper(overlay_path);
         ErrorMsg.text = String(response);
     });
 
@@ -363,8 +352,6 @@ function buildPrefsWidget() {
 
     /////////////////////////////////////////
     // Return our widget which will be added to the window
-    // PS: I wasn't able to resize the prefs window, I wanted to make the height of the prefs window a little bigger
-    // so that the image is a little bigger as well. I tried adding height_request in gtk.grid but it didn't work.
     return prefsWidget;
 }
 
