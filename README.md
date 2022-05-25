@@ -26,10 +26,14 @@ A Gnome extension to apply overlays on wallpaper.
 
 Original                   |  Modified
 :-------------------------:|:-------------------------:
-![Screenshot](screenshots/1.png)  |  ![Screenshot](screenshots/2.png)
+![Screenshot](screenshots/0.png)  |  ![Screenshot](screenshots/1.png)
+
+Modified                   |  Modified
+:-------------------------:|:-------------------------:
+![Screenshot](screenshots/2.png)  |  ![Screenshot](screenshots/3.png)
 
 <p align="center">
-  <img src="screenshots/3.png" />
+  <img src="screenshots/pref.png" />
 </p>
 
 <!-- ![Screenshot](screenshots/3.png) -->
@@ -47,7 +51,7 @@ I have a habit to change my wallpaper more frequently. And there were some probl
 - I needed to change my dock colour everytime I change my wallpaper so that It may feel consistent with the wallpaper.
 - If my dock was transparent then for some wallpapers the color of dock area was so light that the text were barely visible.
 - Adding a solid color to dock sometimes gave the feeling that the dock and wallpaper are two separate entities and if I put gradient on the dock then the gradient looked weird as it ranged on the very short heighted dock.
-- I made this extension to solve these problems, but while in the making, I realised that It has huge potential. Like I can imagine a huge set of several innovative overlays which make the Linux desktop experience more pleasing.
+- I made this extension to solve these problems, but while in the making, I realised that It has some potential. Like I can imagine a large set of several innovative overlays which make the Desktop experience more pleasing.
 
 ## Features
 
@@ -62,12 +66,12 @@ This extension has following features:
   - Apply one overlay
   - Reselect current set wallpaper
   - Apply second overlay and so on.
+- You can set it to automatically apply your selected overlay whenever wallpaper is changed. 
 
 ## Overlay Creating Guide
 
-This extension has following features:
+You can create an overlay with your ideas preety easily
 
-- You can create an overlay with your ideas preety easily
 - I recommend to copy any overlay file from /src/resources or from Public Overlay collection. Then edit it in any svg editor like inkscape.
 - If you want to have the option to change one color, you can set the changeable color to #0000ff. This color in the whole svg gets replaced while applying overlay.
 - You can even create a transparent png to use as an overlay.
@@ -198,10 +202,6 @@ Now Install it and you are done
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-<!-- ## Thanks to
-
-- This project is modified from [Internet Speed Meter](https://github.com/AlShakib/InternetSpeedMeter) by [Al Shakib](https://alshakib.dev) -->
 
 ## License
 

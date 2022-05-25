@@ -1,151 +1,125 @@
-/*
-* Name: Wallpaper Overlay
-* Description: Extension to add overlays on desktop wallpaper
-* Author: Rishu Raj
-*/
-"use strict";
+////////////////////////////////////////////////////////////
 //Const Variables
 const Gio            = imports.gi.Gio;
 const GLib           = imports.gi.GLib;
-const Gdk            = imports.gi.Gdk;
 const ExtensionUtils = imports.misc.extensionUtils;
-const Me             = imports.misc.extensionUtils.getCurrentExtension();
+const Me             = ExtensionUtils.getCurrentExtension();
 const [major]        = imports.misc.config.PACKAGE_VERSION.split('.');
 const shellVersion   = Number.parseInt(major);
 const home_dir       = GLib.get_home_dir();
 
-//Temporary Variables
-let modWallpaper  = Me.path + "/temp/modWallpaper.png";
-let modWallpaper2 = Me.path + "/temp/modWallpaper2.png";
-let modOverlay    = Me.path + "/temp/modOverlay.svg";
-let resizedImage  = Me.path + "/temp/resizedImage.png";
-let pngOverlay    = Me.path + "/temp/pngOverlay.png";
-let logSize       = 8000; // about 8k
+
+////////////////////////////////////////////////////////////
+// Function Declaraions
+// function _modifyExternalSetting(schemaPath, settingId, settingValue);
+// function _setWallpaper(path);
+// function saveExceptionLog(e);
+// function getLocalOverlayOptions();
+// function getOverlayFileUri();
+// function getOverlayFormat();
+// function getModifiedOverlayResource();
+// function getModifiedOverlayUri();
+// function getModifiedWallpaperUri();
+// function getCurrentColorScheme();
+// function getCurrentWallpaperUri();
+// function clearCache();
+
+// function getPictureUri();
+// function getOverlayUri();
+// function getOverlayColor();
+// function getOverlayStyleId();
+// function getCustomOverlayState();
+// function getAutoApplyState();
+// function getApplySignal();
+// function getErrorMsg(val);
+// function getScreenRes();
+// function setPictureUri(val);
+// function setOverlayUri(val);
+// function setOverlayColor(val);
+// function setOverlayStyleId(val);
+// function setCustomOverlayState(val);
+// function setAutoApplyState(val);
+// function setApplySignal(val);
+// function setErrorMsg(val);
+// function setScreenRes(val);
 
 
-/////////////////////////////////////////
-// Important functions
-
-function modifySetting(schema_path, setting_id, setting_value){
+////////////////////////////////////////////////////////////
+// Function Implementations
+function _modifyExternalSetting(schemaPath, settingId, settingValue){
   // This function assumes that setting-value is always string
-  let setting = new Gio.Settings({schema: schema_path});
-  if (setting.is_writable(setting_id)){
-    let response = setting.set_string(setting_id, setting_value);
+  let setting = new Gio.Settings({schema: schemaPath});
+  if (setting.is_writable(settingId)){
+    let response = setting.set_string(settingId, settingValue);
     if (response){
       Gio.Settings.sync();
-      return [setting_id + " set \n",1];
+      return [settingId + " set \n",1];
     }
-    saveExceptionLog(schema_path+"."+setting_id +" unmodifiable");
-    return [setting_id +" unmodifiable \n",0];
+    saveExceptionLog(schemaPath+"."+settingId +" unmodifiable");
+    return [settingId +" unmodifiable \n",0];
   }
-  saveExceptionLog(schema_path+"."+setting_id +" unwritable");
-  return [setting_id +" unwritable \n",0];
+  saveExceptionLog(schemaPath+"."+settingId +" unwritable");
+  return [settingId +" unwritable \n",0];
 }
 
-function setWallpaper(path){
-  path = "file://" + path;
-  var msg,response;
-  [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri", path);
-  if (response == 0) return [msg,0];
-  if (shellVersion >= 42){
-    [msg,response] = modifySetting("org.gnome.desktop.background", "picture-uri-dark", path);
-    if (response == 0) return [msg,0];
+function _setWallpaper(path){
+  try{
+    path = "file://" + path;
+    let colorScheme = getCurrentColorScheme();
+    var msg,response;
+    if(colorScheme == 0){
+      [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri", path);
+      if (response == 0) return [msg,0];
+    }
+    else if (colorScheme == 1){
+      [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", path);
+      if (response == 0) return [msg,0];
+    }
+    else{
+      saveExceptionLog("Got Invalid Color Scheme");
+      return ["Couldn't Set Wallpaper",0];
+    }
+    return ["Wallpaper Set",1];
   }
-  return ["Wallpaper Set",1];
+  catch(e){
+    saveExceptionLog(e);
+  }
 }
 
 function saveExceptionLog(e){
-  let log_file = Gio.file_new_for_path( home_dir + '/.local/var/log/WallpaperOverlay.log' );
-  try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
-  let log_file_size =  log_file.query_info( 
-    'standard::size', 0, null).get_size();
-  if( log_file_size > logSize ){
-    log_file.replace( null,false, 0, null ).close(null);
-  }
-  e = Date()+': ' + e + "\n";
-  let logOutStream = log_file.append_to( 1, null );
-  logOutStream.write( e, null );
-  logOutStream.close(null);
-}
-
-/////////////////////////////////////////
-// Main Code
-
-function createOverlay(overlay_path){
-  let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
-  let overlay_color = Settings.get_string('overlay-color');
-  let ext_check = overlay_path.split(".").pop();
-  if(ext_check == "png"){
-    modOverlay = overlay_path;
-    return ["png Overlay ready",1];
-  }
-  if(ext_check != "svg") return ["Overlay is not an svg file",0];
-  // Now change the color in the svg overlay
-  modOverlay   = Me.path + "/temp/modOverlay.svg";
-  let svg_file = String(GLib.file_get_contents(overlay_path)[1]);
-  svg_file     = svg_file.replaceAll("#0000ff",overlay_color);
-  let new_file = Gio.file_new_for_path( modOverlay );
-  try{new_file.create(Gio.FileCreateFlags.NONE, null);} catch{} // if not present, create a new file
-  new_file.replace_contents(svg_file, null, false,
-  Gio.FileCreateFlags.REPLACE_DESTINATION, null);
-  return ["Overlay Ready",1];
-}
-
-function createWallpaper(){
-  let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
-  let image_path  = Settings.get_string('picture-uri');
-  if (image_path == modWallpaper){
-    // exchange modWallpaper paths
-    let temp      = modWallpaper;
-    modWallpaper  = modWallpaper2;
-    modWallpaper2 = temp;
-  }
-  let geo;
   try{
-    let display = Gdk.Display.get_default();
-    let pm      = display.get_monitors().get_item(0);
-    geo = pm.get_geometry();
+    let logSize = 8000; // about 8k
+    let log_file = Gio.file_new_for_path( home_dir + '/.local/var/log/WallpaperOverlay.log' );
+    try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
+    let log_file_size =  log_file.query_info( 
+        'standard::size', 0, null).get_size();
+    if( log_file_size > logSize ){
+        log_file.replace( null,false, 0, null ).close(null);
+    }
+    let date = new Date();
+    e = [
+      date.getDate(),"/",
+      date.getMonth(),"/",
+      date.getFullYear(),"-",
+      date.getHours(),":",
+      date.getMinutes(),":",
+      date.getSeconds(),"~",
+      ' ' + e + "\n"];
+    e = e.join("");
+    let logOutStream = log_file.append_to( 1, null );
+    logOutStream.write( e, null );
+    logOutStream.close(null);
   }
-  catch{
-    geo = imports.gi.Gdk.Display.get_default().get_monitor(0).get_geometry();
-  } 
-  let screen_res = String(geo.width) + "x" + String(geo.height);
-  let command = `convert \\( "${image_path}" -resize ${screen_res}^ -gravity center -extent ${screen_res} \\) \\( -background none "${modOverlay}" -resize ${screen_res}^ -gravity center -extent ${screen_res} \\) -composite -format png "${modWallpaper}"`
-  //saveExceptionLog(screen_res);
-  var [ok,out,err,exit] = GLib.spawn_command_line_sync(command);
-  return (out == ""  && err == ""? ["Overlay Applied on Wallpaper",1] : [ok + " - " + out + " - " + err + "\n",0]);
-}
-
-function applyWallpaper(overlay_path){
-  try{
-    let temp_file= Gio.file_new_for_path( Me.path + "/temp/");
-    try{temp_file.make_directory(null);} catch{}
-    let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
-    var msg,response;
-    [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
-    if (response == 0) return msg;
-    [msg,response] = createOverlay(overlay_path);
-    if (response == 0) return msg;
-    [msg,response] = createWallpaper();
-    if (response == 0) return msg;
-    [msg,response] = setWallpaper(Settings.get_string("picture-uri")); // Did this to refresh wallpaper
-    if (response == 0) return msg;
-    [msg,response] = setWallpaper(modWallpaper);
-    if (response == 0) return msg;
-    return "Applied";
-  } catch (e)
-  {
-    saveExceptionLog(e);
-    if(String(e).includes('“convert” (No such file or directory)'))
-    return "Error : Please install the dependency 'ImageMagick' using your default package manager. Visit \n https://imagemagick.org/script/download.php \n to know more."
-    return "Error : "+ e;
+  catch(e){
+    log("WallpaperOverlay: (Logger Error)");
+    log(e);
   }
 }
 
-function get_overlay_dropdown_options(){
-  let OverlayOptions = {};
-  let resfolder  = Gio.file_new_for_path(Me.path + "/resources/");
-  let enumerator = resfolder.enumerate_children("standard::name, standard::type",Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
+function getLocalOverlayOptions(){
+  let overlayOptions = {};
+  let overlayFolder  = Gio.file_new_for_path(Me.path + "/overlays/");
+  let enumerator = overlayFolder.enumerate_children("standard::name, standard::type",Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
   let child;
   while ((child = enumerator.next_file(null))){
       // check if it is a file
@@ -153,18 +127,161 @@ function get_overlay_dropdown_options(){
       {
       // check file_extension
       let split = child.get_name().split(".");
-      if  (split.pop() == "svg"){
-          OverlayOptions[split.join("")]= "/resources/"+child.get_name();
+      if(split.pop() == "svg"){
+          overlayOptions[split.join("")]= "/overlays/"+child.get_name();
       }
       }
   }
-  OverlayOptions = Object.keys(OverlayOptions).sort().reduce((r, k) => (r[k] = OverlayOptions[k], r), {});
-  return OverlayOptions;
+  overlayOptions = Object.keys(overlayOptions).sort().reduce((r, k) => (r[k] = overlayOptions[k], r), {});
+  return overlayOptions;
 }
 
-/////////////////////////////////////////
-// Thanks
-/*
-   modifySetting was inspired from:
-   https://bitbucket.org/LukasKnuth/backslide/src/7e36a49fc5e1439fa9ed21e39b09b61eca8df41a/backslide@codeisland.org/settings.js?at=master
-   */
+
+function getOverlayFileUri(){
+  if(getCustomOverlayState()) return getOverlayUri();
+  let overlayOptions = getLocalOverlayOptions();
+  let overlayPath = Me.path + overlayOptions[Object.keys(overlayOptions)[getOverlayStyleId()]];
+  return overlayPath;
+}
+
+function getOverlayFormat(){
+  let overlayFilePath = getOverlayFileUri();
+  return overlayFilePath.split(".").pop();
+}
+
+function getModifiedOverlayResource(){
+  let overlayPath = getOverlayFileUri();
+  let overlayColor = getOverlayColor();
+  let svgFile = new TextDecoder('utf-8').decode(GLib.file_get_contents(overlayPath)[1]);
+  svgFile     = svgFile.replaceAll("#0000ff",overlayColor);
+  return svgFile;
+}
+
+function getModifiedOverlayUri(){
+  return Me.path + "/cache/modOverlay.svg";
+}
+
+function getModifiedWallpaperUri(settingId = "picture-uri"){
+  let pic = getPictureUri();
+  let hashCode = function(s){
+    return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);              
+  }// function taken from https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+  let path =Me.path + "/cache/mod" + hashCode(pic + String(Math.random())) + ".png";
+  return path;
+}
+
+function getCurrentColorScheme(){
+  let colorSchemeSetting = new Gio.Settings({schema: "org.gnome.desktop.interface"});
+  let colorScheme = colorSchemeSetting.get_enum("color-scheme");
+  return (colorScheme == 1)?1:0; //1 means dark
+}
+
+function getCurrentWallpaperUri(){
+  let backgroundSetting = new Gio.Settings({schema: "org.gnome.desktop.background"});
+  if(getCurrentColorScheme() == 1){
+    return decodeURI(backgroundSetting.get_string("picture-uri-dark").substr(7,));
+  }
+  else{
+    return decodeURI(backgroundSetting.get_string("picture-uri").substr(7,));
+  }
+  
+}
+
+function clearCache(){
+  let cacheFolder  = Gio.file_new_for_path(Me.path + "/cache/");
+  let enumerator = cacheFolder.enumerate_children("standard::name, standard::type",Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
+  let child;
+  while ((child = enumerator.next_file(null))){
+      // check if it is a file
+      if( child.get_file_type() == Gio.FileType.REGULAR)
+      {
+      // delete if its not important
+      let filepath = Me.path + "/cache/" + child.get_name();
+      if(filepath != getPictureUri() && filepath != getCurrentWallpaperUri()){
+        let file = Gio.file_new_for_path(filepath);
+        file.delete(null);
+      }
+      }
+  }
+  setErrorMsg("Cleaned");
+}
+
+
+function getPictureUri(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_string('picture-uri');
+}
+function getOverlayUri(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_string('overlay-uri');
+}
+function getOverlayColor(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_string('overlay-color');
+}
+function getOverlayStyleId(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_int('overlay-style');
+}
+function getCustomOverlayState(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_boolean('is-custom-overlay');
+}
+function getAutoApplyState(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_boolean('is-auto-apply');
+}
+function getApplySignal(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_boolean('apply-signal');
+}
+function getErrorMsg(){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_string('error-msg');
+}
+function getScreenRes(){
+  // Intended to be used in extension.js
+  let display= imports.gi.Gdk.Display.get_default();
+  let geo;
+  try{
+      let pm = display.get_monitor(0);
+      geo = pm.get_geometry();
+  }
+  catch(e){
+      try{
+        let pm = display.get_monitors().get_item(0);
+        geo = pm.get_geometry();
+      }
+      catch(f){
+        saveExceptionLog("getScreenRes failed")
+        saveExceptionLog("E1: "+String(e));
+        saveExceptionLog("E2: "+String(f));
+        saveExceptionLog("Falling Back to Saved Value of ScreenRes")
+      }
+      return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_string('screen-res');
+  }
+  let screenResolution = String(geo.width) + "x" + String(geo.height);
+  setScreenRes(screenResolution);
+  return screenResolution;
+}
+function setPictureUri(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('picture-uri',val);
+}
+function setOverlayUri(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('overlay-uri',val);
+}
+function setOverlayColor(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('overlay-color',val);
+}
+function setOverlayStyleId(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_int('overlay-style',val);
+}
+function setCustomOverlayState(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_boolean('is-custom-overlay',val);
+}
+function setAutoApplyState(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_boolean('is-auto-apply',val);
+}
+function setApplySignal(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_boolean('apply-signal',val);
+}
+function setErrorMsg(val){
+  let dropErr = ["","Applied","Applying","Cleaning","Cleaned"]
+  if(!dropErr.includes(val)) saveExceptionLog("DisplayLog: "+String(val));
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('error-msg',String(val));
+}
+function setScreenRes(val){
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('screen-res',String(val));
+}

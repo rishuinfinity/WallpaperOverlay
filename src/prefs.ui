@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <object class="AdwPreferencesPage" id="prefs-page">
+    <property name="name">prefs-page</property>
+    <property name="title" translatable="no">Wallpaper Overlay</property>
+    <property name="icon-name">folder-symbolic</property>
+    <child>
+      <object class="AdwPreferencesGroup" id="image-group">
+        <child>
+          <object class="GtkGrid" id="image-row">
+            <property name="vexpand">False</property>
+            <child>
+              <object class="GtkImage" id="image">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">fill</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="height-request">200</property>
+                <property name="css-classes">card</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImage">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">fill</property>
+                <property name="hexpand">False</property>
+                <property name="vexpand">True</property>
+                <property name="icon-name">list-add-symbolic</property>
+                <property name="width-request">50px</property>
+                <property name="icon-size">large</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkImage" id="overlay">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="halign">fill</property>
+                <property name="hexpand">True</property>
+                <property name="vexpand">True</property>
+                <property name="height-request">200</property>
+                <property name="css-classes">card</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="prefs-group">
+        <property name="width-request">500px</property>
+        <child>
+          <object class="AdwActionRow" id="is-auto-apply-row">
+            <property name="title" translatable="no">Apply Automatically</property>
+            <property name="activatable-widget">is-auto-apply-switch</property>
+            <child>
+              <object class="GtkSwitch" id="is-auto-apply-switch">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="image-uri-row">
+            <property name="activatable">True</property>
+            <property name="title" translatable="no">Choose Image</property>
+            
+            <child>
+              <object class="GtkLabel" id="image-uri-label">
+                <property name="valign">center</property>
+                <property name="halign">fill</property>
+                <property name="label">Path</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="image-uri-refresh">
+                <property name="valign">center</property>
+                <property name="icon-name">object-rotate-left-symbolic</property>
+                <property name="tooltip-text">Get Current Wallpaper </property>
+                <style>
+                <class name="flat"/>
+                <class name="circular"/>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwComboRow" id="overlay-style-comborow">
+          <property name="title" translatable="no">Overlay Style</property>
+            <property name="valign">center</property>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="is-custom-overlay-row">
+            <property name="title" translatable="no">Use Custom Overlay</property>
+            <property name="activatable-widget">is-custom-overlay-switch</property>
+            <child>
+              <object class="GtkSwitch" id="is-custom-overlay-switch">
+                <property name="valign">center</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="overlay-uri-row">
+            <property name="title" translatable="no">Choose overlay</property>
+            <property name="activatable">True</property>
+            <child>
+              <object class="GtkLabel" id="overlay-uri-label">
+                <property name="valign">center</property>
+                <property name="halign">fill</property>
+                <property name="label">Path</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="AdwActionRow" id="overlay-color-row">
+            <property name="title" translatable="no">Choose Overlay Color</property>
+            <property name="activatable-widget">overlay-color-picker</property>
+            <child>
+              <object class="GtkLabel" id="overlay-color-label">
+                <property name="valign">center</property>
+                <property name="halign">fill</property>
+                <property name="label">#color</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkColorButton" id="overlay-color-picker">
+                <property name="valign">center</property>
+                <property name="halign">fill</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="apply-group">
+        <child>
+          <object class="AdwActionRow" id="apply-row">
+            <!-- <property name="halign">center</property> -->
+            <property name="hexpand">True</property>
+            <property name="vexpand">False</property>
+            <!-- <property name="height-request">40px</property> -->
+            <property name="activatable-widget">apply-button</property>
+            <style>
+              <class name="linked"/>
+              <!-- <class name="raised"/> -->
+            </style>
+            <child type="prefix">
+              <object class="GtkButton" id="apply-button">
+                <property name="label">Apply</property>
+                <property name="halign">end</property>
+                <property name="hexpand">True</property>
+                <!-- <property name="margin-start">50px</property> -->
+                <style>
+                  <class name="apply-button"/>
+                  <!-- <class name="suggested-action"/> -->
+                  <class name="flat"/>
+                </style>
+              </object>
+            </child>
+            <!-- <child>
+              <object class="GtkButton" id="clear-cache-button">
+                <property name="icon-name">edit-clear-all-symbolic</property>
+                <property name="tooltip-text">Clear All Cache Files</property>
+                <property name="width-request">0px</property>
+                <property name="margin-top">10px</property>
+                <property name="margin-bottom">10px</property>
+                <style>
+                  <class name="circular"/>
+                  <class name="flat"/>
+                </style>
+              </object>
+            </child> -->
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="AdwPreferencesGroup" id="error-group">
+        <property name="visible">False</property>
+        <child>
+          <object class="AdwExpanderRow" id="error-row">
+            <property name="halign">fill</property>
+            <property name="hexpand">True</property>
+            <property name="vexpand">False</property>
+            <property name="title">Error Title</property>
+            <style>
+              <class name="card"/>
+              <class name="background"/>
+            </style>
+            <child>
+              <object class="GtkLabel" id="error-view">
+                <property name="selectable">True</property>
+                <property name="margin-bottom">20px</property>
+                <property name="margin-end">20px</property>
+                <property name="margin-start">20px</property>
+                <property name="margin-top">20px</property>
+                <property name="wrap">True</property>
+                <style>
+                </style>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

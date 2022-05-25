@@ -30,7 +30,28 @@
     <key name="is-custom-overlay" type="b">
       <default>false</default>
       <summary>Specify whether to use a custom overlay file</summary>
-      <description>Make sure to select a png file</description>
+      <description>Make sure to select a png or svg file</description>
+    </key>
+    
+    <key name="is-auto-apply" type="b">
+      <default>false</default>
+      <summary>Specify whether to apply the overlay automatically on any new wallpaper</summary>
+      <description>Triggers overlay whenever you set a new wallpaper manually</description>
+    </key>
+
+    <key name="apply-signal" type="b">
+      <default>false</default>
+      <summary>Trigger to apply wallpaper</summary>
+    </key>
+
+    <key name="error-msg" type="s">
+      <default>""</default>
+      <summary>Error message to be shown in prefs tab</summary>
+    </key>
+
+    <key name="screen-res" type="s">
+      <default>"1920x1080"</default>
+      <summary>Screen Resolution of the screen</summary>
     </key>
   </schema>
 </schemalist>
