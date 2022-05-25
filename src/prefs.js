@@ -1,29 +1,359 @@
-/*
-* Name: Wallpaper Overlay
-* Description: Extension to add overlays on desktop wallpaper
-* Author: Rishu Raj
-*/
-"use strict";
-//Const Variables
-const Gio            = imports.gi.Gio;
-const Gtk            = imports.gi.Gtk;
-const Gdk            = imports.gi.Gdk;
+////////////////////////////////////////////////////////////
+// Const Imports
+const {Gtk,Adw,Gio,GLib,Gdk,GdkPixbuf}  = imports.gi;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me             = ExtensionUtils.getCurrentExtension();
 const lib            = Me.imports.lib;
 
-function init() {
+////////////////////////////////////////////////////////////
+// Global Variables
+let mySetting = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+
+////////////////////////////////////////////////////////////
+// Function Declaraions
+// function init();
+// function fillPreferencesWindow(window);
+// function shrink_string(s)
+// function _showFileChooser(title, params, acceptBtn, acceptHandler, filePath)
+// function cssHexString(css)
+
+////////////////////////////////////////////////////////////
+// Prefs.js default functions
+function init(){
+    const styleProvider = new Gtk.CssProvider();
+    styleProvider.load_from_path(GLib.build_filenamev([Me.path, 'stylesheet.css']));
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
-/////////////////////////////////////////
-// Shrink longer filenames to smaller size
+function fillPreferencesWindow(window) {
+    window.set_default_size(530, 700);
+    let builder = Gtk.Builder.new();
+    try{
+        let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+        builder.add_from_file(Me.path + '/prefs.ui');
+        // Creating variables corresponding to objects
+        let image = builder.get_object("image");
+        let overlay= builder.get_object("overlay");
+        let isAutoApplySwitch = builder.get_object('is-auto-apply-switch');
+        let imageUriRow = builder.get_object("image-uri-row");
+        let imageUriLabel=builder.get_object("image-uri-label");
+        let imageUriRefresh=builder.get_object("image-uri-refresh");
+        let overlayStyleComboRow=builder.get_object("overlay-style-comborow");
+        let isCustomOverlaySwitch=builder.get_object("is-custom-overlay-switch");
+        let overlayUriRow = builder.get_object("overlay-uri-row");
+        let overlayUriLabel=builder.get_object("overlay-uri-label");
+        let overlayColorRow=builder.get_object("overlay-color-row");
+        let overlayColorLabel=builder.get_object("overlay-color-label");
+        let overlayColorPicker=builder.get_object("overlay-color-picker");
+        let applyButton = builder.get_object("apply-button");
+        let errorGroup=builder.get_object("error-group");
+        let errorRow = builder.get_object("error-row");
+        let errorView= builder.get_object("error-view");
+        // let clearCacheButton = builder.get_object("clear-cache-button");
+
+        //
+        let dropErr = ["Applied","Applying"];
+        if(dropErr.includes(lib.getErrorMsg())) lib.setErrorMsg("");
+        if(lib.getErrorMsg().includes("Only Supported")) lib.setErrorMsg("");
+        //
+        //Adding bindings and connecting
+        //Image
+        function updateImage(){
+            image.set_from_file(lib.getPictureUri());
+        }
+        updateImage();
+        mySetting.connect("changed::picture-uri", () => {
+            updateImage();
+        });
+        // Overlay
+        function updateOverlayImage(){
+            let overlayFormat = lib.getOverlayFormat();
+            if(overlayFormat == "svg"){
+                let data = lib.getModifiedOverlayResource();
+                let stream= Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(data))
+                let pixbuf = GdkPixbuf.Pixbuf.new_from_stream(stream,null);
+                overlay.set_from_pixbuf(pixbuf);
+                return;
+            }
+            else{
+                overlay.set_from_file(lib.getOverlayFileUri());
+            }
+            
+        }
+        updateOverlayImage();
+        
+
+        // Auto Apply Switch
+        Settings.bind(
+            'is-auto-apply',
+            isAutoApplySwitch,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        isAutoApplySwitch.connect("notify::active",() =>{
+            updateImageUriSensitivity();
+            updateapplyButtonSensitivity();
+        });
+
+        // Image Uri Label
+        function updateImageUriSensitivity(){
+            if(isAutoApplySwitch.get_state() == false){
+                imageUriRow.sensitive = true;
+            }
+            else{
+                imageUriRow.sensitive = false;
+            }
+        };
+        updateImageUriSensitivity();
+        imageUriLabel.label = shrink_string(lib.getPictureUri());
+
+        imageUriRow.connect('activated', () => {
+            _showFileChooser(
+                'Select Image',
+                { action: Gtk.FileChooserAction.OPEN },
+                "Open",
+                filename => {
+                    let fileFormat = filename.split(".").pop();
+                    if(["png","jpg","jpeg"].includes(fileFormat)){
+                        lib.setPictureUri(filename);
+                        imageUriLabel.label = shrink_string(filename);
+                        updateImage();
+                        lib.setErrorMsg("");
+                    }
+                    else{
+                        lib.setErrorMsg("Only Supported image formats are png, jpg and jpeg\nWhereas "
+                        +filename
+                        +" is of format "
+                        + fileFormat);
+                    }
+                    
+                },
+                lib.getPictureUri()
+            );
+        });
+
+        imageUriRefresh.connect('clicked',()=>{
+            let wlpapr = lib.getCurrentWallpaperUri();
+            lib.setPictureUri(wlpapr);
+            imageUriLabel.label = shrink_string(wlpapr);
+            updateImage();
+        });
+
+        // Overlay Style DropDown
+        function updateOverlayStyleDropDownSensitivity(){
+            if(isCustomOverlaySwitch.get_state() == false){
+                overlayStyleComboRow.sensitive = true;
+            }
+            else{
+                overlayStyleComboRow.sensitive = false;
+            }
+        }
+        updateOverlayStyleDropDownSensitivity();
+        let OverlayOptions = lib.getLocalOverlayOptions();
+        let overlayDropDownList = new Gtk.StringList({});
+        Object.entries(OverlayOptions).forEach(([key, value]) => {
+            overlayDropDownList.append(key);
+        });
+        overlayStyleComboRow.model = overlayDropDownList;
+        overlayStyleComboRow.connect("notify::selected-item", ()=>{
+            lib.setOverlayStyleId(overlayStyleComboRow.selected);
+            updateOverlayImage();
+        });
+        overlayStyleComboRow.selected=lib.getOverlayStyleId();
+
+        // Use Custom Overlay Switch
+        Settings.bind(
+            'is-custom-overlay',
+            isCustomOverlaySwitch,
+            'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        isCustomOverlaySwitch.connect("notify::active",() =>{
+            updateOverlayStyleDropDownSensitivity();
+            updateOverlayUriSensitivity();
+            updateOverlayColorPickerSensitivity(lib.getOverlayFileUri());
+            updateOverlayImage();
+        });
+
+        // Overlay Uri Label
+        function updateOverlayUriSensitivity(){
+            if(isCustomOverlaySwitch.get_state() == true){
+                overlayUriRow.sensitive = true;
+            }
+            else{
+                overlayUriRow.sensitive = false;
+            }
+        };
+        updateOverlayUriSensitivity();
+        overlayUriLabel.label = shrink_string(lib.getOverlayUri());
+        overlayUriRow.connect('activated', () => {
+            _showFileChooser(
+                'Select Overlay',
+                { action: Gtk.FileChooserAction.OPEN },
+                "Open",
+                filename => {
+                    let fileFormat = filename.split(".").pop();
+                    if(["png","svg"].includes(fileFormat)){
+                        lib.setOverlayUri(filename);
+                        overlayUriLabel.label = shrink_string(filename);
+                        updateOverlayImage();
+                        updateOverlayColorPickerSensitivity(filename);
+                        lib.setErrorMsg("");
+                    }
+                    else{
+                        lib.setErrorMsg("Only Supported overlay formats are png and svg\nWhereas "
+                        +filename
+                        +" is of format "
+                        + fileFormat);
+                    }
+                    
+                },
+                lib.getOverlayUri()
+            );
+        });
+        
+        // Overlay Color Button
+        function updateOverlayColorPickerSensitivity(filename){
+            if(filename.substr(-3)=="svg"){
+                overlayColorRow.sensitive = true;
+            }
+            else{
+                overlayColorRow.sensitive = false;
+            }
+        }
+        updateOverlayColorPickerSensitivity(lib.getOverlayFileUri());
+        let rgba = overlayColorPicker.get_rgba();
+        rgba.parse(lib.getOverlayColor());
+        overlayColorPicker.set_rgba(rgba);
+        overlayColorLabel.label = lib.getOverlayColor();
+        overlayColorPicker.connect('color-set',() => {
+            try{
+            let color = cssHexString(overlayColorPicker.get_rgba().to_string());
+            lib.setOverlayColor(color);
+            overlayColorLabel.label = color;
+            updateOverlayImage();
+            }
+            catch(e){
+                lib.setErrorMsg(e);
+            }
+        });
+
+        // Apply Button
+        function updateapplyButtonSensitivity(){
+            if(lib.getAutoApplyState()){
+                applyButton.sensitive = false;
+            }
+            else{
+                applyButton.sensitive = true;
+            }
+        }
+        updateapplyButtonSensitivity();
+        applyButton.connect('clicked',()=>{
+            lib.setErrorMsg("Applying");
+            lib.setApplySignal(!lib.getApplySignal());
+        });
+
+        // Error Row
+        function showSimpleError(icon_name, title){
+            let errorRowActionRow = errorRow.get_first_child().get_first_child().get_first_child();
+            let errorRowSuffix = errorRowActionRow.get_first_child().get_last_child();
+            errorGroup.visible = true;
+            errorRow.enable_expansion=false;
+            errorRow.expanded = false;
+            errorRowActionRow.activatable = false;
+            errorRowSuffix.visible = false;
+            errorRow.title=title;
+            errorRow.icon_name=icon_name;
+        }
+        function showComplexError(icon_name,title, description){
+            let errorRowActionRow = errorRow.get_first_child().get_first_child().get_first_child();
+            let errorRowSuffix = errorRowActionRow.get_first_child().get_last_child();
+            errorGroup.visible = true;
+            errorRow.enable_expansion=true;
+            errorRow.expanded = false;
+            errorRowActionRow.activatable = true;
+            errorRowSuffix.visible = true;
+            errorRow.title=title;
+            errorRow.icon_name=icon_name;
+            errorView.label=description;
+        }
+        function updateErrorShowStatus(){
+            let errMsg = lib.getErrorMsg();
+            switch(errMsg){
+                case "":
+                    // errorGroup.visible = false;
+                    showComplexError(
+                        "face-smile-symbolic",
+                        "Thanks for using Wallpaper Overlay",
+                        "Visit the github page for more overlays, or you can create some with your own ideas."
+                    );
+                    break;
+            case "Applied":
+                showSimpleError(
+                    "emblem-default-symbolic",
+                    "Overlay Applied Successfully"
+                    );
+                break;
+            case "Applying":
+                showSimpleError(
+                    "emblem-synchronizing-symbolic",
+                    "Applying"
+                    );
+                break;
+            case "Cleaning":
+                showSimpleError(
+                    "user-trash-symbolic",
+                    "Cleaning Cache",
+                );
+                break;
+            case "Cleaned":
+                showSimpleError(
+                    "emblem-default-symbolic",
+                    "Cache Files Cleaned Successfully"
+                );
+                break;
+            case "GLib.SpawnError: Failed to execute child process “convert” (No such file or directory)":
+                showComplexError(
+                    "dialog-warning-symbolic",
+                    "Please install ImageMagick",
+                    "Please install the dependency 'ImageMagick' using your default package manager.\nVisit https://imagemagick.org/script/download.php to know more.\n"+
+                    "\nThe error generated was: \n"+
+                    errMsg
+                );
+                break;
+            default:
+                showComplexError("dialog-error-symbolic","Some Error Occured",errMsg);
+            }
+        }
+
+        updateErrorShowStatus();
+        mySetting.connect("changed::error-msg", () => {
+            updateErrorShowStatus();
+        });
+
+
+        // Clear Cache Button
+        // clearCacheButton.connect("clicked",() => {
+        //     lib.setErrorMsg("Cleaning");
+        //     lib.clearCache();
+        // });
+    }
+    catch(e){
+        lib.saveExceptionLog("Prefs.js: "+ String(e));
+    }
+
+    let page = builder.get_object('prefs-page');
+    window.add(page);
+}
+
+////////////////////////////////////////////////////////////
+// Function Implementations
 function shrink_string(s){
     if (s.length < 35)
     return s;
     return "..." + s.substr(-32);
 }
 
-/////////////////////////////////////////
 // File Picker Button (From color-picker@tuberry)
 function _showFileChooser(title, params, acceptBtn, acceptHandler, filePath) {
     // let filter = newGtk.FileFilter({});
@@ -46,7 +376,6 @@ function _showFileChooser(title, params, acceptBtn, acceptHandler, filePath) {
     dialog.show();
 }
 
-/////////////////////////////////////////
 // RGBA to Hex (From dash-to-panel@jderose9.github.com)
 function cssHexString(css) {
     let rrggbb = '#';
@@ -73,285 +402,5 @@ function cssHexString(css) {
         css = css.slice(end);
     }
     return rrggbb;
-}
-
-/////////////////////////////////////////
-// Build the Preference Widget
-
-function buildPrefsWidget() {
-    /////////////////////////////////////////
-    // Create a parent widget that we'll return from this function
-    let Settings = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
-    let prefsWidget = new Gtk.Grid({
-        margin_start   : 20,
-        margin_end     : 20,  
-        margin_top     : 20,
-        margin_bottom  : 20,
-        column_spacing : 20,
-        row_spacing    : 12,
-        visible        : true,
-        halign         : Gtk.Align.CENTER,
-    });
-    let Image = new Gtk.Image({
-        visible        :true,
-        can_focus      : false,
-        hexpand        : true,
-        vexpand        : true,
-    });
-    Image.set_from_file(Settings.get_string("picture-uri")); 
-
-    // let Overlay = new Gtk.Image({
-    //     visible:true,
-    //     can_focus: false,
-    //     hexpand: true,
-    //     vexpand: true
-    // });
-    // update_overlay_image();
-
-    /////////////////////////////////////////
-    // Create a label & input for `image path`
-    let imagepathLabel = new Gtk.Label({
-        label      : '<b>Choose Image:</b>',
-        halign     : Gtk.Align.START,
-        use_markup : true,
-        visible    : true
-    });
-    let imageButton = new Gtk.Button({
-        label      : shrink_string(Settings.get_string("picture-uri")),
-        valign     : Gtk.Align.CENTER,
-        halign     : Gtk.Align.FILL,
-    });
-    imageButton.connect('clicked', ()=> {
-        _showFileChooser(
-            'Select Image',
-            { action: Gtk.FileChooserAction.OPEN },
-            "Open",
-            filename => {
-                Settings.set_string("picture-uri",filename);
-                imageButton.label = shrink_string(filename);
-                Image.set_from_file(Settings.get_string("picture-uri"));
-            },
-            Settings.get_string("picture-uri")
-        );
-        
-    })
-    let getCurrentWallpaper = new Gtk.Button({
-        valign     : Gtk.Align.CENTER,
-        halign     : Gtk.Align.FILL,
-        tooltip_text: "Get Current Wallpaper",
-        icon_name  : "object-rotate-left-symbolic"
-    });
-    getCurrentWallpaper.connect('clicked',()=>{
-        let setting = new Gio.Settings({schema: "org.gnome.desktop.background"});
-        let wlpapr  = setting.get_string("picture-uri").substr(7,);
-        Settings.set_string("picture-uri",wlpapr);
-        imageButton.label = shrink_string(wlpapr);
-        Image.set_from_file(Settings.get_string("picture-uri")); 
-    });
-
-    /////////////////////////////////////////
-    // Overlay Menu
-
-    let OverlayOptions = {};
-    try{
-        OverlayOptions = lib.get_overlay_dropdown_options();
-    }
-    catch(e){
-        lib.saveExceptionLog(e);
-    }
-    let overlayMenuLabel = new Gtk.Label({
-        label      : '<b>Overlay:</b>',
-        halign     : Gtk.Align.START,
-        use_markup : true,
-        sensitive  : !Settings.get_boolean('is-custom-overlay'),
-    });
-
-    let overlayDropDownList = new Gtk.StringList({})
-    Object.entries(OverlayOptions).forEach(([key, value]) => {
-        overlayDropDownList.append(key);
-     });
-
-    let overlayMenuDropDown = new Gtk.DropDown({
-        enable_search : false,
-        model : overlayDropDownList,
-        sensitive  : !Settings.get_boolean('is-custom-overlay'),
-        selected: Settings.get_int("overlay-style") || 0
-    })
-    function set_overlay_menu_sensitivity(val){
-        overlayMenuLabel.sensitive = val;
-        overlayMenuDropDown.sensitive = val;
-    }
-
-    /////////////////////////////////////////
-    // Create a toggle for custom overlay selection
-    let customOverlayLabel = new Gtk.Label({
-        label      : '<b>Use Custom Overlay Image:</b>',
-        halign     : Gtk.Align.START,
-        use_markup : true
-    });
-
-    let customOverlayToggle = new Gtk.Switch({
-        active     : false,
-        halign     : Gtk.Align.END,
-        hexpand    : true,
-        visible    : true
-    });
-    Settings.bind(
-        'is-custom-overlay',
-        customOverlayToggle,
-        'active',
-        Gio.SettingsBindFlags.DEFAULT
-    );
-    customOverlayToggle.connect("state-set",() => {
-        // I dont know why but the boolean values are somehow sent reversed here, hence the opposite assignment
-        if (customOverlayToggle.get_state() == true){
-            set_overlay_menu_sensitivity(true);
-            set_custom_overlay_sensitivity(false);
-            set_color_sensitivity(true);
-        }
-        else{
-            set_overlay_menu_sensitivity(false);
-            set_custom_overlay_sensitivity(true);
-            if (Settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
-            else set_color_sensitivity(false)
-        }
-    });
-
-    /////////////////////////////////////////
-    // Create a label & input for custom `overlay path`
-    let overlayPathLabel = new Gtk.Label({
-        label      : '<b>Custom Overlay Image:</b>  (svg/png)',
-        halign     : Gtk.Align.START,
-        use_markup : true,
-        sensitive  : Settings.get_boolean('is-custom-overlay')
-    });
-    let overlayPathButton = new Gtk.Button({
-        label      : shrink_string(Settings.get_string("overlay-uri")),
-        valign     : Gtk.Align.CENTER,
-        halign     : Gtk.Align.FILL,
-        sensitive  : Settings.get_boolean('is-custom-overlay')
-    });
-    overlayPathButton.connect('clicked', ()=> {
-        _showFileChooser(
-            'Select Overlay File (.svg)',
-            {action: Gtk.FileChooserAction.OPEN },
-            "Open",
-            filename => {
-                Settings.set_string("overlay-uri",filename);
-                overlayPathButton.label = shrink_string(filename);
-                if (filename.substr(-3) == "svg") set_color_sensitivity(true)
-                else set_color_sensitivity(false)
-            },
-            Settings.get_string("overlay-uri")
-        );
-    })
-    function set_custom_overlay_sensitivity(val){
-        overlayPathLabel.sensitive = val;
-        overlayPathButton.sensitive= val;
-    }
-    // function update_overlay_image(){};
-    // update_overlay_image = () =>{
-    //     if(Settings.get_boolean('is-custom-overlay')){
-    //         Overlay.set_from_file(Settings.get_string("overlay-uri"));
-    //     }
-    //     else{
-    //         let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[Settings.get_int('overlay-style')]];
-    //         Overlay.set_from_file(overlay_path);
-    //     }
-    // };
-
-    /////////////////////////////////////////
-    // Create a label & imput for color
-    let changeColorLabel = new Gtk.Label({
-        label      : '<b>Set Overlay Primary Color:</b>',
-        halign     : Gtk.Align.START,
-        use_markup : true,
-        visible    : true
-    });
-    let colorinp = new Gtk.Box({
-        visible    : true,
-        can_focus  : true,
-        halign     : Gtk.Align.END,
-        homogeneous: false,
-    });
-    let colorlabel = new Gtk.Label({
-        label      : Settings.get_string('overlay-color'),
-        halign     : Gtk.Align.END,
-        use_markup : true,
-        visible    : true
-    });
-    let colorentry = new Gtk.ColorButton({
-        visible    : true,
-        can_focus  : true,
-        halign     : Gtk.Align.END,
-    });
-    let rgba = colorentry.get_rgba();
-    rgba.parse(Settings.get_string('overlay-color'));
-    colorentry.set_rgba(rgba);
-    colorentry.connect('color-set',() => {
-        let color = cssHexString(colorentry.get_rgba().to_string());
-        Settings.set_string('overlay-color',color);
-        colorlabel.label = color;
-    });
-    colorinp.append(colorlabel);
-    colorinp.append(colorentry);
-
-    function set_color_sensitivity(val){
-        colorinp.sensitive = val;
-        changeColorLabel.sensitive = val;
-    }
-    if (!Settings.get_boolean("is-custom-overlay") || Settings.get_string("overlay-uri").substr(-3) == "svg") set_color_sensitivity(true)
-    else set_color_sensitivity(false)
-
-    /////////////////////////////////////////
-    // Error msgs
-    let ErrorMsg   = new Gtk.TextBuffer({
-        text       : ''
-    });
-    let ErrorLabel = new Gtk.TextView({
-        buffer         : ErrorMsg,
-        editable       : false,
-        bottom_margin  : 10,
-        left_margin    : 10,
-        top_margin     : 10,
-        right_margin   : 10,
-        monospace      : true,
-        cursor_visible : false,
-        justification  : Gtk.Justification.CENTER,
-        wrap_mode      : Gtk.WrapMode.WORD
-    });
-
-    /////////////////////////////////////////
-    // Apply Button
-    let applyButton = new Gtk.Button({
-        label      : "Apply Wallpaper",
-        visible    : true,
-        
-    });
-    applyButton.connect('clicked', () => {
-        ErrorMsg.text = "Applying...";
-        Settings.set_int("overlay-style", overlayMenuDropDown.selected);
-        let overlay_path = Me.path + OverlayOptions[Object.keys(OverlayOptions)[Settings.get_int('overlay-style')]];
-        if (Settings.get_boolean('is-custom-overlay')){
-            overlay_path = Settings.get_string('overlay-uri');
-        }
-        let response     = lib.applyWallpaper(overlay_path);
-        ErrorMsg.text = String(response);
-    });
-
-    /////////////////////////////////////////
-    // attach elements to positions
-    prefsWidget.attach(Image,              0, 1, 3, 1);                                                         //prefsWidget.attach(Overlay,             2, 1, 1, 1);
-    prefsWidget.attach(imagepathLabel,     0, 2, 1, 1); prefsWidget.attach(getCurrentWallpaper, 1, 2, 1, 1);    prefsWidget.attach(imageButton,         2, 2, 1, 1);
-    prefsWidget.attach(overlayMenuLabel,   0, 3, 1, 1);                                                         prefsWidget.attach(overlayMenuDropDown, 2, 3, 1, 1);
-    prefsWidget.attach(customOverlayLabel, 0, 4, 1, 1);                                                         prefsWidget.attach(customOverlayToggle, 2, 4, 1, 1);
-    prefsWidget.attach(overlayPathLabel,   0, 5, 1, 1);                                                         prefsWidget.attach(overlayPathButton,   2, 5, 1, 1);
-    prefsWidget.attach(changeColorLabel,   0, 6, 1, 1);                                                         prefsWidget.attach(colorinp,            2, 6, 1, 1);
-                                                        prefsWidget.attach(applyButton,        0, 7, 3, 1);
-                                                        prefsWidget.attach(ErrorLabel,         0, 8, 3, 1);
-
-    /////////////////////////////////////////
-    // Return our widget which will be added to the window
-    return prefsWidget;
 }
 
