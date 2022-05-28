@@ -1,3 +1,9 @@
+/*
+* Name: Wallpaper Overlay
+* Description: Extension to apply Overlays on wallpaper
+* Author: Rishu Raj
+*/
+'use strict';
 ////////////////////////////////////////////////////////////
 //Const Variables
 const {Gio,GLib,Gdk} = imports.gi;
@@ -12,6 +18,7 @@ let mySetting;
 let colorSchemeSetting;
 let handlerAutoApply;
 let handlerColorScheme;
+let handlerPictureUri;
 let handlerWallpaper;
 let handlerWallpaperDark;
 let handlerApply;
@@ -23,11 +30,10 @@ let handlerApply;
 // function disable();
 // function _asyncRunCmd(cmd)
 // function _applyOverlay();
+// async function execCommunicate(argv, input = null, cancellable = null) 
 // function updateConnectFunctions()
 // function connectHandler(type)
 // function disconnectHandler(type);
-
-
 
 ////////////////////////////////////////////////////////////
 // Extension.js default functions
@@ -36,7 +42,7 @@ function init() {
   
 }
 
-function enable() {  
+function enable() {
     backgroundSetting = new Gio.Settings({schema: "org.gnome.desktop.background"});
     mySetting = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
     colorSchemeSetting = new Gio.Settings({schema: "org.gnome.desktop.interface"});
@@ -47,82 +53,91 @@ function enable() {
     } catch{} // if the folder is present it would catch null
     updateConnectFunctions();
     connectHandler("auto-apply");
-    connectHandler("color-scheme");
-    try{ // read current wallpaper if its not modified
-        let currentWallpaper = lib.getCurrentWallpaperUri();
-        let blockPath = Me.path + "/cache/mod";
-        if(!currentWallpaper.includes(blockPath)){
-            lib.setPictureUri(currentWallpaper);
-        }
-    }catch{}
-    
+    connectHandler("apply");
+    // read current wallpaper if its not modified
+    if(!lib.isInCache(lib.getCurrentWallpaperUri())){
+        lib.setPictureUri(lib.getCurrentWallpaperUri());
+    }
 }
 
 function disable() {
     // removeOverlay
     try{
+        disconnectHandler("apply");
         disconnectHandler("auto-apply");
+        disconnectHandler("picture-uri");
         disconnectHandler("color-scheme");
         disconnectHandler("wallpaper");
         disconnectHandler("wallpaper-dark");
-        disconnectHandler("apply");
     }catch{}
     backgroundSetting = null;
     mySetting = null;
     colorSchemeSetting = null;
     handlerAutoApply = null;
+    handlerPictureUri = null;
     handlerColorScheme = null;
     handlerWallpaper = null;
     handlerWallpaperDark = null;
     handlerApply = null;
-    try{
-        let currentWallpaper = lib.getCurrentWallpaperUri();
-        let blockPath = Me.path + "/cache/mod";
-        if(currentWallpaper.includes(blockPath)){
-            lib._setWallpaper(lib.getPictureUri());
-        }
-    }
-    catch(e){
-        log("Failed to remove overlay");
-    }
+    // try{
+    //     if(lib.isInCache(lib.getCurrentWallpaperUri()){
+    //         lib._setWallpaper(lib.getPictureUri());
+    //     }
+    // }
+    // catch(e){
+    //     log("Failed to remove overlay");
+    // } I decided to let it be on disable coz it got removed on lock screen
+    // The user can always set a new wallpaper after disabling
 }
 
 ////////////////////////////////////////////////////////////
 // Function Implementations
 
-function _asyncRunCmd(cmd){
-    let loop = GLib.MainLoop.new(null, false);
-    try {
-        let proc = Gio.Subprocess.new(
-            cmd,
-            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE
-        );
+async function execCommunicate(argv, input = null, cancellable = null) {
+    let cancelId = 0;
+    let flags = (Gio.SubprocessFlags.STDOUT_PIPE |
+                 Gio.SubprocessFlags.STDERR_PIPE);
 
-        proc.communicate_utf8_async(null, null, (proc, res) => {
-            try {
-                let [, stdout, stderr] = proc.communicate_utf8_finish(res);
+    if (input !== null)
+        flags |= Gio.SubprocessFlags.STDIN_PIPE;
 
-                if (proc.get_successful()) {
-                    // lib.saveExceptionLog("Ran Successfully")
-                    lib.setErrorMsg(stdout);
-                } else {
-                    lib.setErrorMsg(stderr);
-                }
-            } catch (e) {
-                lib.setErrorMsg(e);
-            } finally {
-                loop.quit();
-            }
-        });
-    } catch (e) {
-        lib.setErrorMsg(e);
+    let proc = new Gio.Subprocess({
+        argv: argv,
+        flags: flags
+    });
+    proc.init(cancellable);
+
+    if (cancellable instanceof Gio.Cancellable) {
+        cancelId = cancellable.connect(() => proc.force_exit());
     }
 
-    loop.run();
+    return new Promise((resolve, reject) => {
+        proc.communicate_utf8_async(input, null, (proc, res) => {
+            try {
+                let [, stdout, stderr] = proc.communicate_utf8_finish(res);
+                let status = proc.get_exit_status();
+
+                if (status !== 0) {
+                    throw new Gio.IOErrorEnum({
+                        code: Gio.io_error_from_errno(status),
+                        message: stderr ? stderr.trim() : GLib.strerror(status)
+                    });
+                }
+                resolve(stdout.trim());
+            } catch (e) {
+                reject(e);
+            } finally {
+                if (cancelId > 0) {
+                    cancellable.disconnect(cancelId);
+                }
+            }
+        });
+    });
 }
 
 function _applyOverlay(){
     try{
+        // File format support for both Image file and Overlay File is checked here
         let overlayPath = lib.getOverlayFileUri();
         let overlayFormat = lib.getOverlayFormat();
         if(overlayFormat == "svg"){
@@ -132,17 +147,9 @@ function _applyOverlay(){
             Gio.FileCreateFlags.REPLACE_DESTINATION, null);
             overlayPath = lib.getModifiedOverlayUri();
         }
-        else if(overlayFormat != "png"){
-            return ["Overlay File needs to be an SVG or PNG file", 0];
-        }
         // create the modified wallpaper
         let imagePath = lib.getPictureUri();
-        let allowedFormats = ["png","jpg",  "jpeg"];
-        if(!allowedFormats.includes(imagePath.split(".").pop())){
-            return ["Wallpaper file format not supported",0];
-        }
         let outputPath = lib.getModifiedWallpaperUri();
-        // lib.deleteFile(outputPath); // clean file at output: Gnome wallpaper caching made me do this
         let screenResolution = lib.getScreenRes();
         // Running Image Processing Asynchronously
         let commandArray = [
@@ -158,123 +165,123 @@ function _applyOverlay(){
             "-format", "png",
             outputPath
         ];
-        _asyncRunCmd(commandArray);
-        if(lib.getErrorMsg() == ""){
-            let [msg,response] = lib._setWallpaper(outputPath);
-            if(response == 0){
-                lib.setErrorMsg(msg);
+        let outPromise = execCommunicate(commandArray);
+        outPromise.then(
+            // then only runs if command ran successfully
+            result => {
+                if(result == ""){
+                    try{
+                        lib._setWallpaper(outputPath);
+                        lib.clearCache();
+                        lib.setErrorMsg("Applied");
+                    }
+                    catch(e){
+                        lib.setErrorMsg("Error during setting wallpaper");
+                        lib.saveExceptionLog(e);
+                    }
+                }
             }
-            else{
-                lib.clearCache();
-                lib.setErrorMsg("Applied")
-            }
-        }
+        ).catch( e => {
+            lib.setErrorMsg("Error during image processing");
+            lib.saveExceptionLog(e);
+        });
     }
     catch(e){
-        lib.setErrorMsg(e);
-        return ["Failed to apply Overlay",0];
-    }
-    return ["Overlay Applied Successfully",1];
-}
-
-
-function updateConnectFunctions(){
-    try{
-        if(lib.getAutoApplyState()){
-            disconnectHandler("apply");
-            // Here 1 means dark, 0 means default/light
-            if(lib.getCurrentColorScheme() == 0){
-                disconnectHandler("wallpaper-dark");
-                connectHandler("wallpaper");
-            }
-            else{
-                disconnectHandler("wallpaper");
-                connectHandler("wallpaper-dark");
-            }
-        }
-        else{
-            disconnectHandler("wallpaper");
-            disconnectHandler("wallpaper-dark");
-            connectHandler("apply");
-        }
-        
-    }
-    catch(e)
-    {
+        lib.setErrorMsg("Apply Overlay failed");
         lib.saveExceptionLog(e);
+        return;
     }
-
 }
 
 
+////////////////////////////////////////////////////////////
+// Extension.js Signal Management Functions
 function connectHandler(type){
+    // I have made sure here that _applyOverlay() or any function using _applyOverlay
+    // is run at last in each function, as _applyOverlay() is an async function
     try{
         switch(type){
+            case "apply":
+                if(handlerApply == null)
+                handlerApply = mySetting.connect('changed::apply-signal', () => {
+                    // this signal should not be used if auto apply is on
+                    // i am first setting the image as wallpaper so that there is no black screen (caused by imageMagick taking time to write to image file)
+                    // to be seen by the user, as imageMagick creates the file asynchronously
+                    // and I couldn't find out a way to know when the image writing has been completed :(
+                    // if(!lib.getAutoApplyState())
+                    // lib._setWallpaper(lib.getPictureUri()); // if wallpaper change animation is bad then this option is needed
+                    _applyOverlay();
+                });
+                break;
             case "auto-apply":
                 if(handlerAutoApply == null)
                 handlerAutoApply = mySetting.connect("changed::is-auto-apply",() => {
+                    updateConnectFunctions();
                     if(lib.getAutoApplyState()){
-                        let currentWallpaper = lib.getCurrentWallpaperUri();
-                        let blockPath = Me.path + "/cache/mod";
-                        if(!currentWallpaper.includes(blockPath)){
+                        if(!lib.isInCache(lib.getCurrentWallpaperUri())){
                             lib.setPictureUri(lib.getCurrentWallpaperUri());
+                        }
+                        else{
                             _applyOverlay();
                         }
                     }
-                    updateConnectFunctions();
+                });
+                break;
+            // remember the following handlers would only be active if auto apply is on
+            case "picture-uri":
+                if(handlerPictureUri == null)
+                handlerPictureUri = mySetting.connect("changed::picture-uri",() => {
+                    _applyOverlay();
                 });
                 break;
             case "color-scheme":
                 if(handlerColorScheme == null)
-                handlerColorScheme = colorSchemeSetting.connect("changed::color-scheme",()=>{
-                    // set overlay once again
-                    if(lib.getAutoApplyState()){
-                        // Remove from there
-                        if(lib.getCurrentColorScheme() == 0){
-                            lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", "file://"+lib.getPictureUri());                            
-                        }
-                        else{
-                            lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri", "file://"+lib.getPictureUri());
-                        }
-                        // Apply here
-                        let currentWallpaper = lib.getCurrentWallpaperUri();
-                        let blockPath = Me.path + "/cache/mod";
-                        if(!currentWallpaper.includes(blockPath)){
-                            lib.setPictureUri(currentWallpaper);
-                            _applyOverlay();
-                        }
-
+                handlerColorScheme = colorSchemeSetting.connect("changed::color-scheme", ()=>{
+                    // Update overlay on current scheme wallpaper and remove from old scheme wallpaper
+                    if(lib.getCurrentColorScheme() == 0){
+                        disconnectHandler("wallpaper-dark");
+                        lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", "file://"+lib.getPictureUri());                            
+                    }
+                    else{
+                        disconnectHandler("wallpaper");
+                        lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri", "file://"+lib.getPictureUri());
                     }
                     updateConnectFunctions();
+                    if(lib.getPictureUri() != lib.getCurrentWallpaperUri()){
+                        lib.setPictureUri(lib.getCurrentWallpaperUri());
+                    }
+                    else{
+                        _applyOverlay();
+                    }
+                    // if the wallpaper on the new scheme mode is already an overlay applied wallpaper
+                    // then this would make it a double overlay wallpaper, in order to maintain the auto-apply
+                    // overlay style, that wallpaper gets another overlay on top.
+                    // Although a blatant quick switching of color-scheme may give user a blank wallpaper due to async
                 });
                 break;
             case "wallpaper":
                 if(handlerWallpaper == null)
                 handlerWallpaper = backgroundSetting.connect('changed::picture-uri', () => {
-                    let currentWallpaper = lib.getCurrentWallpaperUri();
-                    let blockPath = Me.path + "/cache/mod";
-                    if(!currentWallpaper.includes(blockPath)){
-                        lib.setPictureUri(currentWallpaper);
-                        _applyOverlay();
+                    // I am depending on the handlerPictureUri to apply overlay here but
+                    // if the picture uri is same as last one, then this wont apply overlay on it
+                    // so gotta add a special case for that
+                    if(!lib.isInCache(lib.getCurrentWallpaperUri()))
+                    if(lib.getPictureUri() == lib.getCurrentWallpaperUri()){
+                        _applyOverlay()
+                    } else {
+                        lib.setPictureUri(lib.getCurrentWallpaperUri());
                     }
                 });
                 break;
             case "wallpaper-dark":
                 if(handlerWallpaperDark == null)
                 handlerWallpaperDark= backgroundSetting.connect('changed::picture-uri-dark', () => {
-                    let currentWallpaper = lib.getCurrentWallpaperUri();
-                    let blockPath = Me.path + "/cache/mod";
-                    if(!currentWallpaper.includes(blockPath)){
-                        lib.setPictureUri(currentWallpaper);
-                        _applyOverlay();
+                    if(!lib.isInCache(lib.getCurrentWallpaperUri()))
+                    if(lib.getPictureUri() == lib.getCurrentWallpaperUri()){
+                        _applyOverlay()
+                    } else {
+                        lib.setPictureUri(lib.getCurrentWallpaperUri());
                     }
-                });
-                break;
-            case "apply":
-                if(handlerApply == null)
-                handlerApply = mySetting.connect('changed::apply-signal', () => {
-                    lib._setWallpaper(lib.getPictureUri());
-                    _applyOverlay();
                 });
                 break;
         }
@@ -293,6 +300,11 @@ function disconnectHandler(type){
                     handlerAutoApply = null;
                 }
                 break;
+            case "picture-uri":
+                if(handlerPictureUri != null){
+                    mySetting.disconnect(handlerPictureUri);
+                    handlerAutoApply = null;
+                }
             case "color-scheme":
                 if(handlerColorScheme != null){
                     colorSchemeSetting.disconnect(handlerColorScheme);
@@ -316,10 +328,42 @@ function disconnectHandler(type){
                     handlerApply = null;
                 }
                 break;
-                
         }
     }
     catch(e){
+        lib.setErrorMsg("Error Disconnecting Signal Listeners");
+        lib.saveExceptionLog(e);
+    }
+}
+
+function updateConnectFunctions(){
+    // handles signals by color-scheme, wallpaper, wallpaper-dark, picture-uri
+    // the remaining ones apply and auto-apply are handled in enable and disable
+    try{
+        if(lib.getAutoApplyState()){
+            connectHandler("picture-uri");
+            connectHandler("color-scheme");
+            // Here 1 means dark, 0 means default/light
+            if(lib.getCurrentColorScheme() == 0){
+                disconnectHandler("wallpaper-dark");
+                connectHandler("wallpaper");
+            }
+            else{
+                disconnectHandler("wallpaper");
+                connectHandler("wallpaper-dark");
+            }
+        }
+        else{
+            disconnectHandler("color-scheme");
+            disconnectHandler("picture-uri");
+            disconnectHandler("wallpaper");
+            disconnectHandler("wallpaper-dark");
+        }
+        
+    }
+    catch(e)
+    {
+        lib.setErrorMsg("Error Updating Signal Listeners");
         lib.saveExceptionLog(e);
     }
 }

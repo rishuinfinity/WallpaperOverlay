@@ -64,13 +64,14 @@
         <child>
           <object class="AdwActionRow" id="image-uri-row">
             <property name="activatable">True</property>
-            <property name="title" translatable="no">Choose Image</property>
-            
+            <property name="title" translatable="no">Image Path</property>
+            <property name="subtitle">Path</property>
             <child>
               <object class="GtkLabel" id="image-uri-label">
                 <property name="valign">center</property>
                 <property name="halign">fill</property>
                 <property name="label">Path</property>
+                <property name="visible">False</property>
               </object>
             </child>
             <child>
@@ -105,13 +106,15 @@
         </child>
         <child>
           <object class="AdwActionRow" id="overlay-uri-row">
-            <property name="title" translatable="no">Choose overlay</property>
+            <property name="title" translatable="no">Custom Overlay Path</property>
             <property name="activatable">True</property>
+            <property name="subtitle">Path</property>
             <child>
               <object class="GtkLabel" id="overlay-uri-label">
                 <property name="valign">center</property>
                 <property name="halign">fill</property>
                 <property name="label">Path</property>
+                <property name="visible">False</property>
               </object>
             </child>
           </object>
@@ -141,41 +144,23 @@
       <object class="AdwPreferencesGroup" id="apply-group">
         <child>
           <object class="AdwActionRow" id="apply-row">
-            <!-- <property name="halign">center</property> -->
             <property name="hexpand">True</property>
             <property name="vexpand">False</property>
-            <!-- <property name="height-request">40px</property> -->
             <property name="activatable-widget">apply-button</property>
             <style>
               <class name="linked"/>
-              <!-- <class name="raised"/> -->
             </style>
             <child type="prefix">
               <object class="GtkButton" id="apply-button">
                 <property name="label">Apply</property>
                 <property name="halign">end</property>
                 <property name="hexpand">True</property>
-                <!-- <property name="margin-start">50px</property> -->
                 <style>
                   <class name="apply-button"/>
-                  <!-- <class name="suggested-action"/> -->
                   <class name="flat"/>
                 </style>
               </object>
             </child>
-            <!-- <child>
-              <object class="GtkButton" id="clear-cache-button">
-                <property name="icon-name">edit-clear-all-symbolic</property>
-                <property name="tooltip-text">Clear All Cache Files</property>
-                <property name="width-request">0px</property>
-                <property name="margin-top">10px</property>
-                <property name="margin-bottom">10px</property>
-                <style>
-                  <class name="circular"/>
-                  <class name="flat"/>
-                </style>
-              </object>
-            </child> -->
           </object>
         </child>
       </object>

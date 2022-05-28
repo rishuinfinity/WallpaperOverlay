@@ -163,7 +163,7 @@ You would be asked to add a browser extension, install the extension. Now you ar
 
 Usually ImageMagick is pre-installed in most of the distros. If not, you will have to install it manually. Visit [ImageMagick website](https://imagemagick.org/script/download.php) to know how to install.
 
-### Install Wallpaper Switcher from Gnome Extensions
+### Install Wallpaper Overlay from Gnome Extensions
 
 If you are using Gnome Extensions Manager then open it and click Browse and search for <b>Wallpaper Overlay</b>
 
@@ -171,7 +171,7 @@ If you are using Gnome Extensions then Visit [Wallpaper Overlay - GNOME Shell Ex
 
 Now Install it and you are done
 
-### Install Wallpaper Switcher from source
+### Install Wallpaper Overlay from source
 
 1. Clone this repository
 

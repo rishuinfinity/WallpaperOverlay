@@ -1,11 +1,15 @@
+/*
+* Name: Wallpaper Overlay
+* Description: Extension to apply Overlays on wallpaper
+* Author: Rishu Raj
+*/
+'use strict';
 ////////////////////////////////////////////////////////////
 //Const Variables
 const Gio            = imports.gi.Gio;
 const GLib           = imports.gi.GLib;
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me             = ExtensionUtils.getCurrentExtension();
-const [major]        = imports.misc.config.PACKAGE_VERSION.split('.');
-const shellVersion   = Number.parseInt(major);
 const home_dir       = GLib.get_home_dir();
 
 
@@ -23,6 +27,7 @@ const home_dir       = GLib.get_home_dir();
 // function getCurrentColorScheme();
 // function getCurrentWallpaperUri();
 // function clearCache();
+// function isInCache(path);
 
 // function getPictureUri();
 // function getOverlayUri();
@@ -55,39 +60,38 @@ function _modifyExternalSetting(schemaPath, settingId, settingValue){
       Gio.Settings.sync();
       return [settingId + " set \n",1];
     }
-    saveExceptionLog(schemaPath+"."+settingId +" unmodifiable");
+    setErrorMsg(schemaPath+"."+settingId +" unmodifiable");
     return [settingId +" unmodifiable \n",0];
   }
-  saveExceptionLog(schemaPath+"."+settingId +" unwritable");
+  setErrorMsg(schemaPath+"."+settingId +" unwritable");
   return [settingId +" unwritable \n",0];
 }
 
 function _setWallpaper(path){
   try{
-    path = "file://" + path;
-    let colorScheme = getCurrentColorScheme();
-    var msg,response;
-    if(colorScheme == 0){
-      [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri", path);
-      if (response == 0) return [msg,0];
+    if(Gio.file_new_for_path(path).query_exists(null)){
+      path = "file://" + path;
+      let colorScheme = getCurrentColorScheme();
+      var msg,response;
+      if(colorScheme == 0){
+        [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri", path);
+        if (response == 0) return [msg,0];
+      }
+      else{
+        [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", path);
+        if (response == 0) return [msg,0];
+      }
+      return ["Wallpaper Set",1];
     }
-    else if (colorScheme == 1){
-      [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", path);
-      if (response == 0) return [msg,0];
-    }
-    else{
-      saveExceptionLog("Got Invalid Color Scheme");
-      return ["Couldn't Set Wallpaper",0];
-    }
-    return ["Wallpaper Set",1];
   }
   catch(e){
-    saveExceptionLog(e);
+    saveExceptionLog(e,"SetWallpaperError");
   }
 }
 
-function saveExceptionLog(e){
+function saveExceptionLog(err,msg=null){
   try{
+    let debug = true;
     let logSize = 8000; // about 8k
     let log_file = Gio.file_new_for_path( home_dir + '/.local/var/log/WallpaperOverlay.log' );
     try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
@@ -97,22 +101,32 @@ function saveExceptionLog(e){
         log_file.replace( null,false, 0, null ).close(null);
     }
     let date = new Date();
-    e = [
+    let e = [
       date.getDate(),"/",
       date.getMonth(),"/",
       date.getFullYear(),"-",
       date.getHours(),":",
       date.getMinutes(),":",
       date.getSeconds(),"~",
-      ' ' + e + "\n"];
+      ' '];
     e = e.join("");
+    e = e.padEnd(21);
+    if(msg != null)
+    e = e + msg + "\n";
+    e = e + String(err) + "\n";
+    if(debug){
+      try{
+       if(err.stack != null)
+       e = e + err.stack + "\n";
+      }catch{}
+    }
     let logOutStream = log_file.append_to( 1, null );
     logOutStream.write( e, null );
     logOutStream.close(null);
   }
   catch(e){
-    log("WallpaperOverlay: (Logger Error)");
-    log(e);
+    log("WallpaperOverlay: (Logger Error)" + String(e));
+    log(String(e.stack));
   }
 }
 
@@ -188,6 +202,7 @@ function getCurrentWallpaperUri(){
 }
 
 function clearCache(){
+  let backgroundSetting = new Gio.Settings({schema: "org.gnome.desktop.background"});
   let cacheFolder  = Gio.file_new_for_path(Me.path + "/cache/");
   let enumerator = cacheFolder.enumerate_children("standard::name, standard::type",Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
   let child;
@@ -197,13 +212,22 @@ function clearCache(){
       {
       // delete if its not important
       let filepath = Me.path + "/cache/" + child.get_name();
-      if(filepath != getPictureUri() && filepath != getCurrentWallpaperUri()){
+      let important_files=[
+        decodeURI(backgroundSetting.get_string("picture-uri-dark").substr(7,)),
+        decodeURI(backgroundSetting.get_string("picture-uri").substr(7,)),
+        getPictureUri()
+      ];
+      if(!important_files.includes(filepath)){
         let file = Gio.file_new_for_path(filepath);
         file.delete(null);
       }
       }
   }
-  setErrorMsg("Cleaned");
+}
+
+function isInCache(path){
+  let blockPath = Me.path + "/cache/";
+  return path.includes(blockPath) ? true : false;
 }
 
 
@@ -245,10 +269,9 @@ function getScreenRes(){
         geo = pm.get_geometry();
       }
       catch(f){
-        saveExceptionLog("getScreenRes failed")
-        saveExceptionLog("E1: "+String(e));
-        saveExceptionLog("E2: "+String(f));
-        saveExceptionLog("Falling Back to Saved Value of ScreenRes")
+        saveExceptionLog(e,"getScreenRes Method1 failed");
+        saveExceptionLog(f,"getScreenRes Method1 failed");
+        saveExceptionLog(new Error("INFO"),"Falling Back to Saved Value of ScreenRes")
       }
       return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').get_string('screen-res');
   }
@@ -257,9 +280,11 @@ function getScreenRes(){
   return screenResolution;
 }
 function setPictureUri(val){
+  if(!["png","jpg", "jpeg"].includes(val.split(".").pop())) return false;
   return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('picture-uri',val);
 }
 function setOverlayUri(val){
+  if(!["svg","png"].includes(val.split(".").pop())) return false;
   return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('overlay-uri',val);
 }
 function setOverlayColor(val){
@@ -278,9 +303,11 @@ function setApplySignal(val){
   return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_boolean('apply-signal',val);
 }
 function setErrorMsg(val){
-  let dropErr = ["","Applied","Applying","Cleaning","Cleaned"]
-  if(!dropErr.includes(val)) saveExceptionLog("DisplayLog: "+String(val));
-  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('error-msg',String(val));
+  val = String(val);
+  // let dropErr = ["","Applied","Applying"]
+  // if(!dropErr.includes(val)) saveExceptionLog(new Error("DisplayLog"),val);
+  saveExceptionLog(new Error("DisplayLog"),"Show: " + val);
+  return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('error-msg',val);
 }
 function setScreenRes(val){
   return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('screen-res',String(val));
