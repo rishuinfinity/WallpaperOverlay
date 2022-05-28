@@ -30,311 +30,301 @@ function init(){
 function fillPreferencesWindow(window) {
     window.set_default_size(530, 700);
     let builder = Gtk.Builder.new();
-    try{
-        // Global Variable for prefs window
-        let mySetting = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
-        builder.add_from_file(Me.path + '/prefs.ui');
-        // Creating variables corresponding to objects
-        let image = builder.get_object("image");
-        let overlay= builder.get_object("overlay");
-        let isAutoApplySwitch = builder.get_object('is-auto-apply-switch');
-        let imageUriRow = builder.get_object("image-uri-row");
-        let imageUriRefresh=builder.get_object("image-uri-refresh");
-        let overlayStyleComboRow=builder.get_object("overlay-style-comborow");
-        let isCustomOverlaySwitch=builder.get_object("is-custom-overlay-switch");
-        let overlayUriRow = builder.get_object("overlay-uri-row");
-        let overlayColorRow=builder.get_object("overlay-color-row");
-        let overlayColorLabel=builder.get_object("overlay-color-label");
-        let overlayColorPicker=builder.get_object("overlay-color-picker");
-        let applyButton = builder.get_object("apply-button");
-        let errorGroup=builder.get_object("error-group");
-        let errorRow = builder.get_object("error-row");
-        let errorView= builder.get_object("error-view");
+    // Global Variable for prefs window
+    let mySetting = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+    builder.add_from_file(Me.path + '/prefs.ui');
+    // Creating variables corresponding to objects
+    let image = builder.get_object("image");
+    let overlay= builder.get_object("overlay");
+    let isAutoApplySwitch = builder.get_object('is-auto-apply-switch');
+    let imageUriRow = builder.get_object("image-uri-row");
+    let imageUriRefresh=builder.get_object("image-uri-refresh");
+    let overlayStyleComboRow=builder.get_object("overlay-style-comborow");
+    let isCustomOverlaySwitch=builder.get_object("is-custom-overlay-switch");
+    let overlayUriRow = builder.get_object("overlay-uri-row");
+    let overlayColorRow=builder.get_object("overlay-color-row");
+    let overlayColorLabel=builder.get_object("overlay-color-label");
+    let overlayColorPicker=builder.get_object("overlay-color-picker");
+    let applyButton = builder.get_object("apply-button");
+    let errorGroup=builder.get_object("error-group");
+    let errorRow = builder.get_object("error-row");
+    let errorView= builder.get_object("error-view");
 
-        //
-        // This block is here intentionally
-        {
-            let dropErr = ["Applied","Applying","Only Supported"];
-            let errmsg = lib.getErrorMsg();
-            for (let d of dropErr){
-                if(errmsg.includes(d)){
-                    lib.setErrorMsg("");
-                    break;
-                }
+    //
+    // This block is here intentionally
+    {
+        let dropErr = ["Applied","Applying","Only Supported"];
+        let errmsg = lib.getErrorMsg();
+        for (let d of dropErr){
+            if(errmsg.includes(d)){
+                lib.setErrorMsg("");
+                break;
             }
         }
-        //
-        //Adding bindings and connecting
-        //Image
-        function updateImage(){
-            image.set_from_file(lib.getPictureUri());
-        }
+    }
+    //
+    //Adding bindings and connecting
+    //Image
+    function updateImage(){
+        image.set_from_file(lib.getPictureUri());
+    }
+    updateImage();
+    mySetting.connect("changed::picture-uri", () => {
         updateImage();
-        mySetting.connect("changed::picture-uri", () => {
-            updateImage();
-        });
+    });
 
-        // Overlay
-        function updateOverlayImage(){
-            let overlayFormat = lib.getOverlayFormat();
-            if(overlayFormat == "svg"){
-                let data = lib.getModifiedOverlayResource();
-                let stream= Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(data))
-                let pixbuf = GdkPixbuf.Pixbuf.new_from_stream(stream,null);
-                overlay.set_from_pixbuf(pixbuf);
-                return;
-            }
-            else{
-                overlay.set_from_file(lib.getOverlayFileUri());
-            }
+    // Overlay
+    function updateOverlayImage(){
+        let overlayFormat = lib.getOverlayFormat();
+        if(overlayFormat == "svg"){
+            let data = lib.getModifiedOverlayResource();
+            let stream= Gio.MemoryInputStream.new_from_bytes(GLib.Bytes.new(data))
+            let pixbuf = GdkPixbuf.Pixbuf.new_from_stream(stream,null);
+            overlay.set_from_pixbuf(pixbuf);
+            return;
         }
-        updateOverlayImage();
-        
-
-        // Auto Apply Switch
-        mySetting.bind(
-            'is-auto-apply',
-            isAutoApplySwitch,
-            'active',
-            Gio.SettingsBindFlags.DEFAULT
-        );
-        isAutoApplySwitch.connect("notify::active",() =>{
-            updateapplyButtonSensitivity();
-        });
-
-        imageUriRow.subtitle = shrink_string(lib.getPictureUri());
-
-        imageUriRow.connect('activated', () => {
-            _showFileChooser(
-                'Select Image',
-                { action: Gtk.FileChooserAction.OPEN },
-                "Open",
-                filename => {
-                    if(lib.setPictureUri(filename)){
-                        lib.setErrorMsg("");
-                        imageUriRow.subtitle = shrink_string(filename);
-                    }
-                    else{
-                        lib.setErrorMsg("Only Supported image formats are png, jpg and jpeg\nWhereas "
-                        +filename
-                        +" is of format "
-                        + filename.split(".").pop());
-                    }
-                },
-                lib.getPictureUri()
-            );
-        });
-
-        imageUriRefresh.connect('clicked',()=>{
-            let wlpapr = lib.getCurrentWallpaperUri();
-            if(lib.setPictureUri(wlpapr))
-            imageUriRow.subtitle = shrink_string(wlpapr);
-        });
-
-        // Overlay Style DropDown
-        function updateOverlayStyleDropDownSensitivity(){
-            if(lib.getCustomOverlayState()){
-                overlayStyleComboRow.sensitive = false;
-            }
-            else{
-                overlayStyleComboRow.sensitive = true;
-            }
+        else{
+            overlay.set_from_file(lib.getOverlayFileUri());
         }
-        updateOverlayStyleDropDownSensitivity();
-        let OverlayOptions = lib.getLocalOverlayOptions();
-        let overlayDropDownList = new Gtk.StringList({});
-        Object.entries(OverlayOptions).forEach(([key, value]) => {
-            overlayDropDownList.append(key);
-        });
-        overlayStyleComboRow.model = overlayDropDownList;
-        overlayStyleComboRow.connect("notify::selected-item", ()=>{
-            lib.setOverlayStyleId(overlayStyleComboRow.selected);
-            updateOverlayImage();
-            if(lib.getAutoApplyState()){
-                lib.setApplySignal(!lib.getApplySignal());
-            }
-        });
-        overlayStyleComboRow.selected=lib.getOverlayStyleId();
+    }
+    updateOverlayImage();
+    
 
-        // Use Custom Overlay Switch
-        mySetting.bind(
-            'is-custom-overlay',
-            isCustomOverlaySwitch,
-            'active',
-            Gio.SettingsBindFlags.DEFAULT
-        );
-        isCustomOverlaySwitch.connect("notify::active",() =>{
-            updateOverlayStyleDropDownSensitivity();
-            updateOverlayUriSensitivity();
-            updateOverlayColorPickerSensitivity(lib.getOverlayFileUri());
-            updateOverlayImage();
-            if(lib.getAutoApplyState()){
-                lib.setApplySignal(!lib.getApplySignal());
-            }
-        });
-
-        // Overlay Uri Label
-        function updateOverlayUriSensitivity(){
-            if(isCustomOverlaySwitch.get_state() == true){
-                overlayUriRow.sensitive = true;
-            }
-            else{
-                overlayUriRow.sensitive = false;
-            }
-        };
-        updateOverlayUriSensitivity();
-        overlayUriRow.subtitle = shrink_string(lib.getOverlayUri());
-        overlayUriRow.connect('activated', () => {
-            _showFileChooser(
-                'Select Overlay',
-                { action: Gtk.FileChooserAction.OPEN },
-                "Open",
-                filename => {
-                    if(lib.setOverlayUri(filename)){
-                        overlayUriRow.subtitle = shrink_string(filename);
-                        updateOverlayImage();
-                        updateOverlayColorPickerSensitivity(filename);
-                        lib.setErrorMsg("");
-                        if(lib.getAutoApplyState()){
-                            lib.setApplySignal(!lib.getApplySignal());
-                        }
-                    }
-                    else{
-                        lib.setErrorMsg("Only Supported overlay formats are png and svg\nWhereas "
-                        +filename
-                        +" is of format "
-                        + filename.split(".").pop());
-                    }
-                    
-                },
-                lib.getOverlayUri()
-            );
-        });
-        
-        // Overlay Color Button
-        function updateOverlayColorPickerSensitivity(filename){
-            if(filename.substr(-3)=="svg"){
-                overlayColorRow.sensitive = true;
-            }
-            else{
-                overlayColorRow.sensitive = false;
-            }
-        }
-        updateOverlayColorPickerSensitivity(lib.getOverlayFileUri());
-        let rgba = overlayColorPicker.get_rgba();
-        rgba.parse(lib.getOverlayColor());
-        overlayColorPicker.set_rgba(rgba);
-        overlayColorLabel.label = lib.getOverlayColor();
-        overlayColorPicker.connect('color-set',() => {
-            try{
-                let color = cssHexString(overlayColorPicker.get_rgba().to_string());
-                lib.setOverlayColor(color);
-                overlayColorLabel.label = color;
-                updateOverlayImage();
-                if(lib.getAutoApplyState()){
-                    lib.setApplySignal(!lib.getApplySignal());
-                }
-            }
-            catch(e){
-                lib.setErrorMsg("Error while picking color");
-                lib.saveExceptionLog(e);
-            }
-        });
-
-        // Apply Button
-        function updateapplyButtonSensitivity(){
-            if(lib.getAutoApplyState()){
-                applyButton.sensitive = false;
-            }
-            else{
-                applyButton.sensitive = true;
-            }
-        }
+    // Auto Apply Switch
+    mySetting.bind(
+        'is-auto-apply',
+        isAutoApplySwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+    isAutoApplySwitch.connect("notify::active",() =>{
         updateapplyButtonSensitivity();
-        applyButton.connect('clicked',()=>{
-            lib.setErrorMsg("Applying");
+    });
+
+    imageUriRow.subtitle = shrink_string(lib.getPictureUri());
+
+    imageUriRow.connect('activated', () => {
+        _showFileChooser(
+            'Select Image',
+            { action: Gtk.FileChooserAction.OPEN },
+            "Open",
+            filename => {
+                if(lib.setPictureUri(filename)){
+                    lib.setErrorMsg("");
+                    imageUriRow.subtitle = shrink_string(filename);
+                }
+                else{
+                    lib.setErrorMsg("Only Supported image formats are png, jpg and jpeg\nWhereas "
+                    +filename
+                    +" is of format "
+                    + filename.split(".").pop());
+                }
+            },
+            lib.getPictureUri()
+        );
+    });
+
+    imageUriRefresh.connect('clicked',()=>{
+        let wlpapr = lib.getCurrentWallpaperUri();
+        if(lib.setPictureUri(wlpapr))
+        imageUriRow.subtitle = shrink_string(wlpapr);
+    });
+
+    // Overlay Style DropDown
+    function updateOverlayStyleDropDownSensitivity(){
+        if(lib.getCustomOverlayState()){
+            overlayStyleComboRow.sensitive = false;
+        }
+        else{
+            overlayStyleComboRow.sensitive = true;
+        }
+    }
+    updateOverlayStyleDropDownSensitivity();
+    let OverlayOptions = lib.getLocalOverlayOptions();
+    let overlayDropDownList = new Gtk.StringList({});
+    Object.entries(OverlayOptions).forEach(([key, value]) => {
+        overlayDropDownList.append(key);
+    });
+    overlayStyleComboRow.model = overlayDropDownList;
+    overlayStyleComboRow.connect("notify::selected-item", ()=>{
+        lib.setOverlayStyleId(overlayStyleComboRow.selected);
+        updateOverlayImage();
+        if(lib.getAutoApplyState()){
             lib.setApplySignal(!lib.getApplySignal());
-        });
+        }
+    });
+    overlayStyleComboRow.selected=lib.getOverlayStyleId();
 
-        // Error Row
-        function showSimpleError(icon_name, title){
-            let errorRowActionRow = errorRow.get_first_child().get_first_child().get_first_child();
-            let errorRowSuffix = errorRowActionRow.get_first_child().get_last_child();
-            errorGroup.visible = true;
-            errorRow.enable_expansion=false;
-            errorRow.expanded = false;
-            errorRowActionRow.activatable = false;
-            errorRowSuffix.visible = false;
-            errorRow.title=title;
-            errorRow.icon_name=icon_name;
+    // Use Custom Overlay Switch
+    mySetting.bind(
+        'is-custom-overlay',
+        isCustomOverlaySwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+    isCustomOverlaySwitch.connect("notify::active",() =>{
+        updateOverlayStyleDropDownSensitivity();
+        updateOverlayUriSensitivity();
+        updateOverlayColorPickerSensitivity(lib.getOverlayFileUri());
+        updateOverlayImage();
+        if(lib.getAutoApplyState()){
+            lib.setApplySignal(!lib.getApplySignal());
         }
-        function showComplexError(icon_name,title, description){
-            let errorRowActionRow = errorRow.get_first_child().get_first_child().get_first_child();
-            let errorRowSuffix = errorRowActionRow.get_first_child().get_last_child();
-            errorGroup.visible = true;
-            errorRow.enable_expansion=true;
-            errorRow.expanded = false;
-            errorRowActionRow.activatable = true;
-            errorRowSuffix.visible = true;
-            errorRow.title=title;
-            errorRow.icon_name=icon_name;
-            errorView.label=description;
+    });
+
+    // Overlay Uri Label
+    function updateOverlayUriSensitivity(){
+        if(isCustomOverlaySwitch.get_state() == true){
+            overlayUriRow.sensitive = true;
         }
-        function updateErrorShowStatus(randint){
-            try{
-                let errMsg = lib.getErrorMsg();
-                lib.saveExceptionLog(randint+" "+errMsg);
-                switch(errMsg){
-                    case "":
-                        // errorGroup.visible = false;
-                        showComplexError(
-                            "face-smile-symbolic",
-                            "Thanks for using Wallpaper Overlay",
-                            "Visit the github page for more overlays, or you can create some with your own ideas."
-                        );
-                        break;
-                    case "Applied":
-                        showSimpleError(
-                            "emblem-default-symbolic",
-                            "Overlay Applied Successfully"
-                            );
-                        break;
-                    case "Applying":
-                        showSimpleError(
-                            "emblem-synchronizing-symbolic",
-                            "Applying"
-                            );
-                        break;
-                    case "GLib.SpawnError: Failed to execute child process “convert” (No such file or directory)":
-                        showComplexError(
-                            "dialog-warning-symbolic",
-                            "Please install ImageMagick",
-                            "Please install the dependency 'ImageMagick' using your default package manager.\nVisit https://imagemagick.org/script/download.php to know more.\n"+
-                            "\nThe error generated was: \n"+
-                            errMsg
-                        );
-                        break;
-                    default:
-                        showComplexError("dialog-error-symbolic","Some Error Occured",errMsg + "\n See .local/var/log/WallpaperOverlay.log to know more");
+        else{
+            overlayUriRow.sensitive = false;
+        }
+    };
+    updateOverlayUriSensitivity();
+    overlayUriRow.subtitle = shrink_string(lib.getOverlayUri());
+    overlayUriRow.connect('activated', () => {
+        _showFileChooser(
+            'Select Overlay',
+            { action: Gtk.FileChooserAction.OPEN },
+            "Open",
+            filename => {
+                if(lib.setOverlayUri(filename)){
+                    overlayUriRow.subtitle = shrink_string(filename);
+                    updateOverlayImage();
+                    updateOverlayColorPickerSensitivity(filename);
+                    lib.setErrorMsg("");
+                    if(lib.getAutoApplyState()){
+                        lib.setApplySignal(!lib.getApplySignal());
                     }
-            }
-            catch(e){
-                lib.saveExceptionLog(e);
-            }
+                }
+                else{
+                    lib.setErrorMsg("Only Supported overlay formats are png and svg\nWhereas "
+                    +filename
+                    +" is of format "
+                    + filename.split(".").pop());
+                }
+                
+            },
+            lib.getOverlayUri()
+        );
+    });
+    
+    // Overlay Color Button
+    function updateOverlayColorPickerSensitivity(filename){
+        if(filename.substr(-3)=="svg"){
+            overlayColorRow.sensitive = true;
+        }
+        else{
+            overlayColorRow.sensitive = false;
+        }
+    }
+    updateOverlayColorPickerSensitivity(lib.getOverlayFileUri());
+    let rgba = overlayColorPicker.get_rgba();
+    rgba.parse(lib.getOverlayColor());
+    overlayColorPicker.set_rgba(rgba);
+    overlayColorLabel.label = lib.getOverlayColor();
+    overlayColorPicker.connect('color-set',() => {
+        let color = cssHexString(overlayColorPicker.get_rgba().to_string());
+        lib.setOverlayColor(color);
+        overlayColorLabel.label = color;
+        updateOverlayImage();
+        if(lib.getAutoApplyState()){
+            lib.setApplySignal(!lib.getApplySignal());
         }
 
-        updateErrorShowStatus();
+    });
 
-
-        let randint = String(Math.random()); // This would show if it is a different listener or same
-        mySetting.connect("changed::error-msg", () => {
-            updateErrorShowStatus(randint);
-        });
-
+    // Apply Button
+    function updateapplyButtonSensitivity(){
+        if(lib.getAutoApplyState()){
+            applyButton.sensitive = false;
+        }
+        else{
+            applyButton.sensitive = true;
+        }
     }
-    catch(e){
-        lib.saveExceptionLog(e,"Error in prefs window");
+    updateapplyButtonSensitivity();
+    applyButton.connect('clicked',()=>{
+        lib.setErrorMsg("Applying");
+        lib.setApplySignal(!lib.getApplySignal());
+    });
+
+    // Error Row
+    function showSimpleError(icon_name, title){
+        let errorRowActionRow = errorRow.get_first_child().get_first_child().get_first_child();
+        let errorRowSuffix = errorRowActionRow.get_first_child().get_last_child();
+        errorGroup.visible = true;
+        errorRow.enable_expansion=false;
+        errorRow.expanded = false;
+        errorRowActionRow.activatable = false;
+        errorRowSuffix.visible = false;
+        errorRow.title=title;
+        errorRow.icon_name=icon_name;
     }
+    function showComplexError(icon_name,title, description){
+        let errorRowActionRow = errorRow.get_first_child().get_first_child().get_first_child();
+        let errorRowSuffix = errorRowActionRow.get_first_child().get_last_child();
+        errorGroup.visible = true;
+        errorRow.enable_expansion=true;
+        errorRow.expanded = false;
+        errorRowActionRow.activatable = true;
+        errorRowSuffix.visible = true;
+        errorRow.title=title;
+        errorRow.icon_name=icon_name;
+        errorView.label=description;
+    }
+    function updateErrorShowStatus(randint){
+        try{
+            let errMsg = lib.getErrorMsg();
+            lib.saveExceptionLog(randint+" "+errMsg);
+            switch(errMsg){
+                case "":
+                    // errorGroup.visible = false;
+                    showComplexError(
+                        "face-smile-symbolic",
+                        "Thanks for using Wallpaper Overlay",
+                        "Visit the github page for more overlays, or you can create some with your own ideas."
+                    );
+                    break;
+                case "Applied":
+                    showSimpleError(
+                        "emblem-default-symbolic",
+                        "Overlay Applied Successfully"
+                        );
+                    break;
+                case "Applying":
+                    showSimpleError(
+                        "emblem-synchronizing-symbolic",
+                        "Applying"
+                        );
+                    break;
+                case "GLib.SpawnError: Failed to execute child process “convert” (No such file or directory)":
+                    showComplexError(
+                        "dialog-warning-symbolic",
+                        "Please install ImageMagick",
+                        "Please install the dependency 'ImageMagick' using your default package manager.\nVisit https://imagemagick.org/script/download.php to know more.\n"+
+                        "\nThe error generated was: \n"+
+                        errMsg
+                    );
+                    break;
+                default:
+                    showComplexError("dialog-error-symbolic","Some Error Occured",errMsg + "\n See .local/var/log/WallpaperOverlay.log to know more");
+                }
+        }
+        catch(e){
+            lib.saveExceptionLog(e);
+        }
+    }
+
+    updateErrorShowStatus();
+
+
+    let randint = String(Math.random()); // This would show if it is a different listener or same
+    mySetting.connect("changed::error-msg", () => {
+        updateErrorShowStatus(randint);
+    });
+
 
     lib.saveExceptionLog(lib.getErrorMsg());
     let page = builder.get_object('prefs-page');
