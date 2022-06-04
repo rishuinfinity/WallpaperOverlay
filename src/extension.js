@@ -28,12 +28,11 @@ let handlerApply;
 // function init();
 // function enable();
 // function disable();
-// function _asyncRunCmd(cmd)
+// async function execCommunicate(argv, input = null, cancellable = null);
 // function _applyOverlay();
-// async function execCommunicate(argv, input = null, cancellable = null) 
-// function updateConnectFunctions()
-// function connectHandler(type)
+// function connectHandler(type);
 // function disconnectHandler(type);
+// function updateConnectFunctions();
 
 ////////////////////////////////////////////////////////////
 // Extension.js default functions
@@ -57,6 +56,9 @@ function enable() {
     // read current wallpaper if its not modified
     if(!lib.isInCache(lib.getCurrentWallpaperUri())){
         lib.setPictureUri(lib.getCurrentWallpaperUri());
+    }
+    if(lib.getAutoApplyState()){
+        _applyOverlay();
     }
 }
 
@@ -199,171 +201,153 @@ function _applyOverlay(){
 function connectHandler(type){
     // I have made sure here that _applyOverlay() or any function using _applyOverlay
     // is run at last in each function, as _applyOverlay() is an async function
-    try{
-        switch(type){
-            case "apply":
-                if(handlerApply == null)
-                handlerApply = mySetting.connect('changed::apply-signal', () => {
-                    // this signal should not be used if auto apply is on
-                    // i am first setting the image as wallpaper so that there is no black screen (caused by imageMagick taking time to write to image file)
-                    // to be seen by the user, as imageMagick creates the file asynchronously
-                    // and I couldn't find out a way to know when the image writing has been completed :(
-                    // if(!lib.getAutoApplyState())
-                    // lib._setWallpaper(lib.getPictureUri()); // if wallpaper change animation is bad then this option is needed
-                    _applyOverlay();
-                });
-                break;
-            case "auto-apply":
-                if(handlerAutoApply == null)
-                handlerAutoApply = mySetting.connect("changed::is-auto-apply",() => {
-                    updateConnectFunctions();
-                    if(lib.getAutoApplyState()){
-                        if(!lib.isInCache(lib.getCurrentWallpaperUri())){
-                            lib.setPictureUri(lib.getCurrentWallpaperUri());
-                        }
-                        else{
-                            _applyOverlay();
-                        }
-                    }
-                });
-                break;
-            // remember the following handlers would only be active if auto apply is on
-            case "picture-uri":
-                if(handlerPictureUri == null)
-                handlerPictureUri = mySetting.connect("changed::picture-uri",() => {
-                    _applyOverlay();
-                });
-                break;
-            case "color-scheme":
-                if(handlerColorScheme == null)
-                handlerColorScheme = colorSchemeSetting.connect("changed::color-scheme", ()=>{
-                    // Update overlay on current scheme wallpaper and remove from old scheme wallpaper
-                    if(lib.getCurrentColorScheme() == 0){
-                        disconnectHandler("wallpaper-dark");
-                        lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", "file://"+lib.getPictureUri());                            
-                    }
-                    else{
-                        disconnectHandler("wallpaper");
-                        lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri", "file://"+lib.getPictureUri());
-                    }
-                    updateConnectFunctions();
-                    if(lib.getPictureUri() != lib.getCurrentWallpaperUri()){
+    switch(type){
+        case "apply":
+            if(handlerApply == null)
+            handlerApply = mySetting.connect('changed::apply-signal', () => {
+                // this signal should not be used if auto apply is on
+                // i am first setting the image as wallpaper so that there is no black screen (caused by imageMagick taking time to write to image file)
+                // to be seen by the user, as imageMagick creates the file asynchronously
+                // and I couldn't find out a way to know when the image writing has been completed :(
+                // if(!lib.getAutoApplyState())
+                // lib._setWallpaper(lib.getPictureUri()); // if wallpaper change animation is bad then this option is needed
+                _applyOverlay();
+            });
+            break;
+        case "auto-apply":
+            if(handlerAutoApply == null)
+            handlerAutoApply = mySetting.connect("changed::is-auto-apply",() => {
+                updateConnectFunctions();
+                if(lib.getAutoApplyState()){
+                    if(!lib.isInCache(lib.getCurrentWallpaperUri())){
                         lib.setPictureUri(lib.getCurrentWallpaperUri());
                     }
                     else{
                         _applyOverlay();
                     }
-                    // if the wallpaper on the new scheme mode is already an overlay applied wallpaper
-                    // then this would make it a double overlay wallpaper, in order to maintain the auto-apply
-                    // overlay style, that wallpaper gets another overlay on top.
-                    // Although a blatant quick switching of color-scheme may give user a blank wallpaper due to async
-                });
-                break;
-            case "wallpaper":
-                if(handlerWallpaper == null)
-                handlerWallpaper = backgroundSetting.connect('changed::picture-uri', () => {
-                    // I am depending on the handlerPictureUri to apply overlay here but
-                    // if the picture uri is same as last one, then this wont apply overlay on it
-                    // so gotta add a special case for that
-                    if(!lib.isInCache(lib.getCurrentWallpaperUri()))
-                    if(lib.getPictureUri() == lib.getCurrentWallpaperUri()){
-                        _applyOverlay()
-                    } else {
-                        lib.setPictureUri(lib.getCurrentWallpaperUri());
-                    }
-                });
-                break;
-            case "wallpaper-dark":
-                if(handlerWallpaperDark == null)
-                handlerWallpaperDark= backgroundSetting.connect('changed::picture-uri-dark', () => {
-                    if(!lib.isInCache(lib.getCurrentWallpaperUri()))
-                    if(lib.getPictureUri() == lib.getCurrentWallpaperUri()){
-                        _applyOverlay()
-                    } else {
-                        lib.setPictureUri(lib.getCurrentWallpaperUri());
-                    }
-                });
-                break;
-        }
-    }
-    catch(e){
-        lib.saveExceptionLog(e);
+                }
+            });
+            break;
+        // remember the following handlers would only be active if auto apply is on
+        case "picture-uri":
+            if(handlerPictureUri == null)
+            handlerPictureUri = mySetting.connect("changed::picture-uri",() => {
+                if(!lib.isInCache(lib.getPictureUri()))
+                _applyOverlay();
+            });
+            break;
+        case "color-scheme":
+            if(handlerColorScheme == null)
+            handlerColorScheme = colorSchemeSetting.connect("changed::color-scheme", ()=>{
+                // Update overlay on current scheme wallpaper and remove from old scheme wallpaper
+                if(lib.getCurrentColorScheme() == 0){
+                    disconnectHandler("wallpaper-dark");
+                    lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", "file://"+lib.getPictureUri());                            
+                }
+                else{
+                    disconnectHandler("wallpaper");
+                    lib._modifyExternalSetting("org.gnome.desktop.background", "picture-uri", "file://"+lib.getPictureUri());
+                }
+                updateConnectFunctions();
+                if(lib.getPictureUri() != lib.getCurrentWallpaperUri()){
+                    lib.setPictureUri(lib.getCurrentWallpaperUri());
+                }
+                else{
+                    _applyOverlay();
+                }
+                // if the wallpaper on the new scheme mode is already an overlay applied wallpaper
+                // then this would make it a double overlay wallpaper, in order to maintain the auto-apply
+                // overlay style, that wallpaper gets another overlay on top.
+                // Although a blatant quick switching of color-scheme may give user a blank wallpaper due to async
+            });
+            break;
+        case "wallpaper":
+            if(handlerWallpaper == null)
+            handlerWallpaper = backgroundSetting.connect('changed::picture-uri', () => {
+                // I am depending on the handlerPictureUri to apply overlay here but
+                // if the picture uri is same as last one, then this wont apply overlay on it
+                // so gotta add a special case for that
+                if(!lib.isInCache(lib.getCurrentWallpaperUri()))
+                if(lib.getPictureUri() == lib.getCurrentWallpaperUri()){
+                    _applyOverlay()
+                } else {
+                    lib.setPictureUri(lib.getCurrentWallpaperUri());
+                }
+            });
+            break;
+        case "wallpaper-dark":
+            if(handlerWallpaperDark == null)
+            handlerWallpaperDark= backgroundSetting.connect('changed::picture-uri-dark', () => {
+                if(!lib.isInCache(lib.getCurrentWallpaperUri()))
+                if(lib.getPictureUri() == lib.getCurrentWallpaperUri()){
+                    _applyOverlay()
+                } else {
+                    lib.setPictureUri(lib.getCurrentWallpaperUri());
+                }
+            });
+            break;
     }
 }
 
 function disconnectHandler(type){
-    try{
-        switch(type){
-            case "auto-apply":
-                if(handlerAutoApply != null){
-                    mySetting.disconnect(handlerAutoApply);
-                    handlerAutoApply = null;
-                }
-                break;
-            case "picture-uri":
-                if(handlerPictureUri != null){
-                    mySetting.disconnect(handlerPictureUri);
-                    handlerAutoApply = null;
-                }
-            case "color-scheme":
-                if(handlerColorScheme != null){
-                    colorSchemeSetting.disconnect(handlerColorScheme);
-                    handlerColorScheme = null;
-                }
-            case "wallpaper":
-                if(handlerWallpaper != null){
-                    backgroundSetting.disconnect(handlerWallpaper);
-                    handlerWallpaper = null;
-                }
-                break;
-            case "wallpaper-dark":
-                if(handlerWallpaperDark != null){
-                    backgroundSetting.disconnect(handlerWallpaperDark);
-                    handlerWallpaperDark = null;
-                }
-                break;
-            case "apply":
-                if(handlerApply !=null){
-                    mySetting.disconnect(handlerApply);
-                    handlerApply = null;
-                }
-                break;
-        }
-    }
-    catch(e){
-        lib.setErrorMsg("Error Disconnecting Signal Listeners");
-        lib.saveExceptionLog(e);
+    switch(type){
+        case "auto-apply":
+            if(handlerAutoApply != null){
+                mySetting.disconnect(handlerAutoApply);
+                handlerAutoApply = null;
+            }
+            break;
+        case "picture-uri":
+            if(handlerPictureUri != null){
+                mySetting.disconnect(handlerPictureUri);
+                handlerPictureUri = null;
+            }
+        case "color-scheme":
+            if(handlerColorScheme != null){
+                colorSchemeSetting.disconnect(handlerColorScheme);
+                handlerColorScheme = null;
+            }
+        case "wallpaper":
+            if(handlerWallpaper != null){
+                backgroundSetting.disconnect(handlerWallpaper);
+                handlerWallpaper = null;
+            }
+            break;
+        case "wallpaper-dark":
+            if(handlerWallpaperDark != null){
+                backgroundSetting.disconnect(handlerWallpaperDark);
+                handlerWallpaperDark = null;
+            }
+            break;
+        case "apply":
+            if(handlerApply !=null){
+                mySetting.disconnect(handlerApply);
+                handlerApply = null;
+            }
+            break;
     }
 }
 
 function updateConnectFunctions(){
     // handles signals by color-scheme, wallpaper, wallpaper-dark, picture-uri
     // the remaining ones apply and auto-apply are handled in enable and disable
-    try{
-        if(lib.getAutoApplyState()){
-            connectHandler("picture-uri");
-            connectHandler("color-scheme");
-            // Here 1 means dark, 0 means default/light
-            if(lib.getCurrentColorScheme() == 0){
-                disconnectHandler("wallpaper-dark");
-                connectHandler("wallpaper");
-            }
-            else{
-                disconnectHandler("wallpaper");
-                connectHandler("wallpaper-dark");
-            }
+    if(lib.getAutoApplyState()){
+        connectHandler("picture-uri");
+        connectHandler("color-scheme");
+        // Here 1 means dark, 0 means default/light
+        if(lib.getCurrentColorScheme() == 0){
+            disconnectHandler("wallpaper-dark");
+            connectHandler("wallpaper");
         }
         else{
-            disconnectHandler("color-scheme");
-            disconnectHandler("picture-uri");
             disconnectHandler("wallpaper");
-            disconnectHandler("wallpaper-dark");
+            connectHandler("wallpaper-dark");
         }
-        
     }
-    catch(e)
-    {
-        lib.setErrorMsg("Error Updating Signal Listeners");
-        lib.saveExceptionLog(e);
+    else{
+        disconnectHandler("color-scheme");
+        disconnectHandler("picture-uri");
+        disconnectHandler("wallpaper");
+        disconnectHandler("wallpaper-dark");
     }
 }

@@ -27,11 +27,11 @@ function init(){
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), styleProvider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
-function fillPreferencesWindow(window) {
+function fillPreferencesWindow(window){
     window.set_default_size(530, 700);
     let builder = Gtk.Builder.new();
     // Global Variable for prefs window
-    let mySetting = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
+    window.mySetting = ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay');
     builder.add_from_file(Me.path + '/prefs.ui');
     // Creating variables corresponding to objects
     let image = builder.get_object("image");
@@ -69,8 +69,9 @@ function fillPreferencesWindow(window) {
         image.set_from_file(lib.getPictureUri());
     }
     updateImage();
-    mySetting.connect("changed::picture-uri", () => {
+    window.handlerPictureUri = window.mySetting.connect("changed::picture-uri", () => {
         updateImage();
+        imageUriRow.subtitle = lib.getPictureUri();
     });
 
     // Overlay
@@ -91,7 +92,7 @@ function fillPreferencesWindow(window) {
     
 
     // Auto Apply Switch
-    mySetting.bind(
+    window.mySetting.bind(
         'is-auto-apply',
         isAutoApplySwitch,
         'active',
@@ -139,7 +140,6 @@ function fillPreferencesWindow(window) {
             overlayStyleComboRow.sensitive = true;
         }
     }
-    updateOverlayStyleDropDownSensitivity();
     let OverlayOptions = lib.getLocalOverlayOptions();
     let overlayDropDownList = new Gtk.StringList({});
     Object.entries(OverlayOptions).forEach(([key, value]) => {
@@ -154,9 +154,10 @@ function fillPreferencesWindow(window) {
         }
     });
     overlayStyleComboRow.selected=lib.getOverlayStyleId();
+    updateOverlayStyleDropDownSensitivity();
 
     // Use Custom Overlay Switch
-    mySetting.bind(
+    window.mySetting.bind(
         'is-custom-overlay',
         isCustomOverlaySwitch,
         'active',
@@ -274,59 +275,61 @@ function fillPreferencesWindow(window) {
         errorRow.icon_name=icon_name;
         errorView.label=description;
     }
-    function updateErrorShowStatus(randint){
-        try{
-            let errMsg = lib.getErrorMsg();
-            lib.saveExceptionLog(randint+" "+errMsg);
-            switch(errMsg){
-                case "":
-                    // errorGroup.visible = false;
-                    showComplexError(
-                        "face-smile-symbolic",
-                        "Thanks for using Wallpaper Overlay",
-                        "Visit the github page for more overlays, or you can create some with your own ideas."
-                    );
-                    break;
-                case "Applied":
-                    showSimpleError(
-                        "emblem-default-symbolic",
-                        "Overlay Applied Successfully"
-                        );
-                    break;
-                case "Applying":
-                    showSimpleError(
-                        "emblem-synchronizing-symbolic",
-                        "Applying"
-                        );
-                    break;
-                case "GLib.SpawnError: Failed to execute child process “convert” (No such file or directory)":
-                    showComplexError(
-                        "dialog-warning-symbolic",
-                        "Please install ImageMagick",
-                        "Please install the dependency 'ImageMagick' using your default package manager.\nVisit https://imagemagick.org/script/download.php to know more.\n"+
-                        "\nThe error generated was: \n"+
-                        errMsg
-                    );
-                    break;
-                default:
-                    showComplexError("dialog-error-symbolic","Some Error Occured",errMsg + "\n See .local/var/log/WallpaperOverlay.log to know more");
-                }
+    function updateErrorShowStatus(){
+        let errMsg = lib.getErrorMsg();
+        if(lib.getAutoApplyState()){
+            if(errMsg == "Applied") errMsg = "";
+            if(errMsg == "Applying")errMsg = "";
         }
-        catch(e){
-            lib.saveExceptionLog(e);
-        }
+        switch(errMsg){
+            case "":
+                // errorGroup.visible = false;
+                showComplexError(
+                    "face-smile-symbolic",
+                    "Thanks for using Wallpaper Overlay",
+                    "Visit the github page for more overlays, or you can create some with your own ideas."
+                );
+                break;
+            case "Applied":
+                showSimpleError(
+                    "emblem-default-symbolic",
+                    "Overlay Applied Successfully"
+                    );
+                break;
+            case "Applying":
+                showSimpleError(
+                    "emblem-synchronizing-symbolic",
+                    "Applying"
+                    );
+                break;
+            case "GLib.SpawnError: Failed to execute child process “convert” (No such file or directory)":
+                showComplexError(
+                    "dialog-warning-symbolic",
+                    "Please install ImageMagick",
+                    "Please install the dependency 'ImageMagick' using your default package manager.\nVisit https://imagemagick.org/script/download.php to know more.\n"+
+                    "\nThe error generated was: \n"+
+                    errMsg
+                );
+                break;
+            default:
+                showComplexError("dialog-error-symbolic","Some Error Occured",errMsg + "\n See .local/var/log/WallpaperOverlay.log to know more");
+            }
+
     }
 
     updateErrorShowStatus();
+    window.handlerErrorMsg = window.mySetting.connect("changed::error-msg", () => {
+        updateErrorShowStatus();
+    });
 
-
-    let randint = String(Math.random()); // This would show if it is a different listener or same
-    mySetting.connect("changed::error-msg", () => {
-        updateErrorShowStatus(randint);
+    // Disconnect Signals of windows
+    window.connect('close-request', () => {
+        // disconnect
+        window.mySetting.disconnect(window.handlerErrorMsg);
+        window.mySetting.disconnect(window.handlerPictureUri);
     });
 
 
-    lib.saveExceptionLog(lib.getErrorMsg());
     let page = builder.get_object('prefs-page');
     window.add(page);
 }

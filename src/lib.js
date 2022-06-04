@@ -17,7 +17,7 @@ const home_dir       = GLib.get_home_dir();
 // Function Declaraions
 // function _modifyExternalSetting(schemaPath, settingId, settingValue);
 // function _setWallpaper(path);
-// function saveExceptionLog(e);
+// function saveExceptionLog(err,msg=null);
 // function getLocalOverlayOptions();
 // function getOverlayFileUri();
 // function getOverlayFormat();
@@ -68,30 +68,25 @@ function _modifyExternalSetting(schemaPath, settingId, settingValue){
 }
 
 function _setWallpaper(path){
-  try{
-    if(Gio.file_new_for_path(path).query_exists(null)){
-      path = "file://" + path;
-      let colorScheme = getCurrentColorScheme();
-      var msg,response;
-      if(colorScheme == 0){
-        [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri", path);
-        if (response == 0) return [msg,0];
-      }
-      else{
-        [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", path);
-        if (response == 0) return [msg,0];
-      }
-      return ["Wallpaper Set",1];
+  if(Gio.file_new_for_path(path).query_exists(null)){
+    path = "file://" + path;
+    let colorScheme = getCurrentColorScheme();
+    var msg,response;
+    if(colorScheme == 0){
+      [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri", path);
+      if (response == 0) return [msg,0];
     }
-  }
-  catch(e){
-    saveExceptionLog(e,"SetWallpaperError");
+    else{
+      [msg,response] = _modifyExternalSetting("org.gnome.desktop.background", "picture-uri-dark", path);
+      if (response == 0) return [msg,0];
+    }
+    return ["Wallpaper Set",1];
   }
 }
 
 function saveExceptionLog(err,msg=null){
   try{
-    let debug = true;
+    let debug = false;
     let logSize = 8000; // about 8k
     let log_file = Gio.file_new_for_path( home_dir + '/.local/var/log/WallpaperOverlay.log' );
     try{log_file.create(Gio.FileCreateFlags.NONE, null);} catch{}
@@ -102,15 +97,14 @@ function saveExceptionLog(err,msg=null){
     }
     let date = new Date();
     let e = [
-      date.getDate(),"/",
-      date.getMonth(),"/",
-      date.getFullYear(),"-",
-      date.getHours(),":",
-      date.getMinutes(),":",
-      date.getSeconds(),"~",
+      String(date.getDate()    ).padStart(2),"/",
+      String(date.getMonth()   ).padStart(2),"/",
+      String(date.getFullYear()).padStart(4),"-",
+      String(date.getHours()   ).padStart(2),":",
+      String(date.getMinutes() ).padStart(2),":",
+      String(date.getSeconds() ).padStart(2),"~",
       ' '];
     e = e.join("");
-    e = e.padEnd(21);
     if(msg != null)
     e = e + msg + "\n";
     e = e + String(err) + "\n";
@@ -304,9 +298,8 @@ function setApplySignal(val){
 }
 function setErrorMsg(val){
   val = String(val);
-  // let dropErr = ["","Applied","Applying"]
-  // if(!dropErr.includes(val)) saveExceptionLog(new Error("DisplayLog"),val);
-  saveExceptionLog(new Error("DisplayLog"),"Show: " + val);
+  let dropErr = ["","Applied","Applying"]
+  if(!dropErr.includes(val)) saveExceptionLog(new Error("DisplayLog"),val);
   return ExtensionUtils.getSettings('org.gnome.shell.extensions.WallpaperOverlay').set_string('error-msg',val);
 }
 function setScreenRes(val){
