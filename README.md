@@ -16,8 +16,8 @@ A Gnome extension to apply overlays on wallpaper.
       - [Setting Up Gnome Extensions Manager](#setting-up-gnome-extensions-manager)
       - [Setting Up Gnome Extensions](#setting-up-gnome-extensions)
     - [Prerequisite: Install ImageMagick](#prerequisite-install-imagemagick)
-    - [Install Wallpaper Switcher from Gnome Extensions](#install-wallpaper-switcher-from-gnome-extensions)
-    - [Install Wallpaper Switcher from source](#install-wallpaper-switcher-from-source)
+    - [Install Wallpaper Overlay from Gnome Extensions](#install-wallpaper-overlay-from-gnome-extensions)
+    - [Install Wallpaper Overlay from source](#install-wallpaper-overlay-from-source)
   - [Contributing](#contributing)
   - [License](#license)
   <!-- - [Thanks to](#thanks-to) -->
@@ -57,6 +57,7 @@ I have a habit to change my wallpaper more frequently. And there were some probl
 
 This extension has following features:
 
+- Visit [Wallpaper Overlay Collection](https://rishuinfinity.github.io/wallpaper-overlays-collection/) to download more custom overlay designs or contribute yours.
 - Apply an overlay on wallpaper in four easy steps
   - Choose image : Either take the currently set wallpaper or choose it manually through the file picker
   - Choose overlay : Either choose it from the default drop-down or select a custom svg/png overlay
@@ -66,13 +67,14 @@ This extension has following features:
   - Apply one overlay
   - Reselect current set wallpaper
   - Apply second overlay and so on.
-- You can set it to automatically apply your selected overlay whenever wallpaper is changed. 
+- You can set it to automatically apply your selected overlay whenever wallpaper is changed.
+- This extension is also compatible with [Wallpaper Switcher](https://extensions.gnome.org/extension/4812/wallpaper-switcher/) hence it gives a much more smooth experience when using Wallpaper Overlay and Wallpaper Switcher together.
 
 ## Overlay Creating Guide
 
 You can create an overlay with your ideas preety easily
 
-- I recommend to copy any overlay file from /src/resources or from Public Overlay collection. Then edit it in any svg editor like inkscape.
+- I recommend to copy any overlay file from /src/resources or from [Wallpaper Overlays collection](https://rishuinfinity.github.io/wallpaper-overlays-collection/). Then edit it in any svg editor like inkscape.
 - If you want to have the option to change one color, you can set the changeable color to #0000ff. This color in the whole svg gets replaced while applying overlay.
 - You can even create a transparent png to use as an overlay.
 
@@ -167,7 +169,7 @@ Usually ImageMagick is pre-installed in most of the distros. If not, you will ha
 
 If you are using Gnome Extensions Manager then open it and click Browse and search for <b>Wallpaper Overlay</b>
 
-If you are using Gnome Extensions then Visit [Wallpaper Overlay - GNOME Shell Extensions](https://extensions.gnome.org/extension/4585/wallpaper-switcher/)
+If you are using Gnome Extensions then Visit [Wallpaper Overlay - GNOME Shell Extensions](https://extensions.gnome.org/extension/5082/wallpaper-overlay/)
 
 Now Install it and you are done
 
