@@ -1,5 +1,10 @@
 # Wallpaper Overlay
 
+<p align="center">
+  <img src="screenshots/WallpaperOverlay.png" />
+  <br/>
+</p>
+
 A Gnome extension to apply overlays on wallpaper.
 
 ## Table of Contents
