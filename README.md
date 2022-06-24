@@ -33,7 +33,7 @@ Original                   |  Modified
 :-------------------------:|:-------------------------:
 ![Screenshot](screenshots/0.png)  |  ![Screenshot](screenshots/1.png)
 
-Modified                   |  Modified
+Original                   |  Modified
 :-------------------------:|:-------------------------:
 ![Screenshot](screenshots/2.png)  |  ![Screenshot](screenshots/3.png)
 
